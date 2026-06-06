@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Value Chain Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid"></div>
+    <main class="app-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Global AI Markets Monitor</p>
+          <h1>AI Value Chain Dashboard</h1>
+          <p class="subtitle">
+            Upstream to downstream mapping with top movers. Each sub-segment shows top 5 by default, with a one-click expand for the remaining 15.
+          </p>
+        </div>
+        <div class="legend">
+          <span class="badge live">Live</span>
+          <span class="badge delayed">Delayed</span>
+          <span class="badge cached">Cached</span>
+          <span class="badge stale">Stale</span>
+        </div>
+      </header>
+
+      <section id="meta" class="meta"></section>
+      <section class="controls" id="controls">
+        <label>
+          Stage
+          <select id="filter-stage">
+            <option value="all">All</option>
+          </select>
+        </label>
+        <label>
+          Company Type
+          <select id="filter-listing">
+            <option value="all">All</option>
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+          </select>
+        </label>
+        <label>
+          Region
+          <select id="filter-region">
+            <option value="all">All</option>
+            <option value="north-america">North America</option>
+            <option value="europe">Europe</option>
+            <option value="asia">Asia</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label class="search-label">
+          Company Search
+          <input id="filter-search" type="search" placeholder="Search name or ticker" />
+        </label>
+      </section>
+      <section id="leaderboard" class="leaderboard"></section>
+      <section id="map" class="map"></section>
+    </main>
+
+    <aside id="company-drawer" class="company-drawer hidden" aria-hidden="true">
+      <div class="drawer-card">
+        <button id="drawer-close" class="drawer-close" type="button">Close</button>
+        <div id="drawer-content"></div>
+      </div>
+    </aside>
+
+    <template id="segment-template">
+      <article class="segment">
+        <header class="segment-header">
+          <p class="stage"></p>
+          <h2></h2>
+          <p class="summary"></p>
+        </header>
+        <div class="subsegments"></div>
+      </article>
+    </template>
+
+    <template id="subsegment-template">
+      <section class="subsegment">
+        <div class="subsegment-title-wrap">
+          <h3></h3>
+          <p class="subsegment-description"></p>
+        </div>
+        <div class="subsegment-index"></div>
+        <div class="subsegment-export">
+          <a class="export-link export-json" href="#">Export Top 5 JSON</a>
+          <a class="export-link export-csv" href="#">Export All CSV</a>
+        </div>
+        <div class="companies"></div>
+        <button class="expand-btn" type="button"></button>
+      </section>
+    </template>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
