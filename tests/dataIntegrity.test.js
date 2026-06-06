@@ -4,13 +4,12 @@ import { getSubsegments } from "../src/data/valueChainData.js";
 
 const tickerPattern = /^[A-Z0-9.\-]+$/i;
 
-test("every subsegment has exactly 20 companies", () => {
+test("every subsegment has at least 10 companies", () => {
   const subsegments = getSubsegments();
   for (const subsegment of subsegments) {
-    assert.equal(
-      subsegment.companies.length,
-      20,
-      `${subsegment.id} has ${subsegment.companies.length} companies (expected 20)`
+    assert.ok(
+      subsegment.companies.length >= 10,
+      `${subsegment.id} has ${subsegment.companies.length} companies (expected at least 10)`
     );
   }
 });

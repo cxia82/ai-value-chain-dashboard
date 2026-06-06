@@ -7,8 +7,9 @@ import {
   getSubsegmentById,
   getSubsegments
 } from "./data/valueChainData.js";
-import { getPublicQuotesBatch } from "./providers/marketDataProvider.js";
+import { getPublicPriceHistory, getPublicQuotesBatch } from "./providers/marketDataProvider.js";
 import { getPrivateValuation } from "./providers/valuationProvider.js";
+import { scheduleWeeklyRefresh, getLastRemovedCompanies, getLastAddedCompanies } from "./utils/companyRefresh.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,12 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = Number(process.env.PORT || 3000);
 const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS || 12000);
+const TARGET_COMPANIES_PER_SUBSEGMENT = 20;
+const AUGMENTED_SEGMENT_IDS = new Set([
+  "compute-infrastructure",
+  "cloud-platforms",
+  "foundation-models"
+]);
 
 const unavailableMarket = (message = "Quote unavailable") => ({
   source: "unavailable",
@@ -68,10 +75,15 @@ const validateCompanyUniqueness = () => {
 };
 
 const validateSubsegmentCompanyCount = () => {
-  const invalid = getSubsegments().filter((subsegment) => subsegment.companies.length !== 20);
+  const MIN_COMPANIES_PER_SUBSEGMENT = 10;
+  const invalid = getSubsegments().filter(
+    (subsegment) => subsegment.companies.length < MIN_COMPANIES_PER_SUBSEGMENT
+  );
   if (invalid.length > 0) {
     const details = invalid.map((s) => `${s.id}:${s.companies.length}`).join(", ");
-    throw new Error(`Invalid company count per subsegment (expected 20): ${details}`);
+    throw new Error(
+      `Invalid company count per subsegment (minimum ${MIN_COMPANIES_PER_SUBSEGMENT}): ${details}`
+    );
   }
 };
 
@@ -219,6 +231,81 @@ const computeSubsegmentValuationIndex = (companies) => {
   };
 };
 
+const rankCompaniesByMarketCap = (companies) => {
+  const comparableMarketCap = (company) => {
+    if (company.isPublic && Number.isFinite(company.market?.marketCap)) {
+      return Number(company.market.marketCap);
+    }
+
+    if (!company.isPublic && Number.isFinite(company.valuation?.latestValuationUsdBn)) {
+      return Number(company.valuation.latestValuationUsdBn) * 1_000_000_000;
+    }
+
+    return Number.NEGATIVE_INFINITY;
+  };
+
+  return [...companies]
+    .sort((a, b) => {
+      const capDelta = comparableMarketCap(b) - comparableMarketCap(a);
+      if (capDelta !== 0) {
+        return capDelta;
+      }
+
+      const rankA = Number.isFinite(a.rank) ? Number(a.rank) : Number.POSITIVE_INFINITY;
+      const rankB = Number.isFinite(b.rank) ? Number(b.rank) : Number.POSITIVE_INFINITY;
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
+
+      return String(a.name || "").localeCompare(String(b.name || ""));
+    })
+    .map((company, index) => ({
+      ...company,
+      rank: index + 1
+    }));
+};
+
+const companyIdentity = (company) => {
+  return String(company.name || "").trim().toLowerCase();
+};
+
+const shouldAugmentSegment = (segmentId) => AUGMENTED_SEGMENT_IDS.has(String(segmentId || ""));
+
+const buildAugmentedCompaniesBySubsegment = (segmentId, segmentSubs, rankedById) => {
+  if (!shouldAugmentSegment(segmentId)) {
+    return new Map(segmentSubs.map((subsegment) => [
+      subsegment.id,
+      rankedById.get(subsegment.id) || []
+    ]));
+  }
+
+  // Keep each company in one primary subsegment assignment only.
+  const output = new Map(
+    segmentSubs.map((subsegment) => [subsegment.id, [...(rankedById.get(subsegment.id) || [])]])
+  );
+  const assigned = new Set();
+  for (const subsegment of segmentSubs) {
+    const current = output.get(subsegment.id) || [];
+    const deduped = [];
+    for (const company of current) {
+      const key = companyIdentity(company);
+      if (assigned.has(key)) {
+        continue;
+      }
+      assigned.add(key);
+      deduped.push(company);
+    }
+    output.set(subsegment.id, rankCompaniesByMarketCap(deduped));
+  }
+
+  return new Map(
+    segmentSubs.map((subsegment) => {
+      const companies = output.get(subsegment.id) || [];
+      return [subsegment.id, companies.slice(0, TARGET_COMPANIES_PER_SUBSEGMENT)];
+    })
+  );
+};
+
 const asCsv = (columns, rows) => {
   const escape = (value) => {
     if (value === null || value === undefined) {
@@ -280,23 +367,32 @@ app.get("/api/value-chain", async (_req, res) => {
   const payload = await Promise.all(
     segments.map(async (segment) => {
       const segmentSubs = allSubsegments.filter((s) => s.segmentId === segment.id);
-      const subsegments = await Promise.all(
-        segmentSubs.map(async (subsegment) => {
-          const enrichedCompanies = await enrichCompanies(subsegment.companies);
-          const topFive = enrichedCompanies.slice(0, 5);
-          const valuationIndex = computeSubsegmentValuationIndex(enrichedCompanies);
-
-          return {
-            id: subsegment.id,
-            name: subsegment.name,
-            description: subsegment.description,
-            totalCompanies: subsegment.companies.length,
-            hiddenCompanies: Math.max(subsegment.companies.length - 5, 0),
-            topCompanies: topFive,
-            valuationIndex
-          };
-        })
+      const rankedById = new Map(
+        await Promise.all(
+          segmentSubs.map(async (subsegment) => {
+            const enrichedCompanies = await enrichCompanies(subsegment.companies);
+            return [subsegment.id, rankCompaniesByMarketCap(enrichedCompanies)];
+          })
+        )
       );
+
+      const augmentedById = buildAugmentedCompaniesBySubsegment(segment.id, segmentSubs, rankedById);
+
+      const subsegments = segmentSubs.map((subsegment) => {
+        const rankedCompanies = augmentedById.get(subsegment.id) || [];
+        const topFive = rankedCompanies.slice(0, 5);
+        const valuationIndex = computeSubsegmentValuationIndex(rankedCompanies);
+
+        return {
+          id: subsegment.id,
+          name: subsegment.name,
+          description: subsegment.description,
+          totalCompanies: rankedCompanies.length,
+          hiddenCompanies: Math.max(rankedCompanies.length - 5, 0),
+          topCompanies: topFive,
+          valuationIndex
+        };
+      });
 
       return {
         id: segment.id,
@@ -308,6 +404,9 @@ app.get("/api/value-chain", async (_req, res) => {
     })
   );
 
+  if (res.headersSent) {
+    return;
+  }
   res.json({
     asOf: new Date().toISOString(),
     segments: payload
@@ -321,8 +420,22 @@ app.get("/api/subsegments/:id/companies", async (req, res) => {
     return;
   }
 
-  const enriched = await enrichCompanies(subsegment.companies);
-  const valuationIndex = computeSubsegmentValuationIndex(enriched);
+  const segmentSubs = getSubsegments().filter((item) => item.segmentId === subsegment.segmentId);
+  const rankedById = new Map(
+    await Promise.all(
+      segmentSubs.map(async (item) => {
+        const enriched = await enrichCompanies(item.companies);
+        return [item.id, rankCompaniesByMarketCap(enriched)];
+      })
+    )
+  );
+
+  const augmentedById = buildAugmentedCompaniesBySubsegment(subsegment.segmentId, segmentSubs, rankedById);
+  const rankedCompanies = augmentedById.get(subsegment.id) || [];
+  const valuationIndex = computeSubsegmentValuationIndex(rankedCompanies);
+  if (res.headersSent) {
+    return;
+  }
   res.json({
     asOf: new Date().toISOString(),
     subsegment: {
@@ -331,8 +444,73 @@ app.get("/api/subsegments/:id/companies", async (req, res) => {
       description: subsegment.description
     },
     valuationIndex,
-    companies: enriched
+    companies: rankedCompanies
   });
+});
+
+app.get("/api/companies", async (_req, res) => {
+  const segments = getSegments();
+  const allSubsegments = getSubsegments();
+  const segmentNameById = new Map(segments.map((segment) => [segment.id, segment.name]));
+
+  const grouped = await Promise.all(
+    allSubsegments.map(async (subsegment) => {
+      const enriched = await enrichCompanies(subsegment.companies);
+      return enriched.map((company) => ({
+        ...company,
+        subsegmentId: subsegment.id,
+        subsegmentName: subsegment.name,
+        segmentId: subsegment.segmentId,
+        segmentName: segmentNameById.get(subsegment.segmentId) || ""
+      }));
+    })
+  );
+
+  if (res.headersSent) {
+    return;
+  }
+  res.json({
+    asOf: new Date().toISOString(),
+    companies: grouped.flat()
+  });
+});
+
+app.get("/api/stock-history", async (req, res) => {
+  const ticker = String(req.query.ticker || "").trim();
+  const period = String(req.query.period || "1m").trim().toLowerCase();
+
+  if (!ticker) {
+    res.status(400).json({ message: "ticker is required" });
+    return;
+  }
+
+  const allowedPeriods = new Set(["1d", "1w", "1m", "3m", "6m", "1y", "2y", "3y", "5y"]);
+  if (!allowedPeriods.has(period)) {
+    res.status(400).json({ message: "Invalid period. Use 1d, 1w, 1m, 3m, 6m, 1y, 2y, 3y, or 5y." });
+    return;
+  }
+
+  try {
+    const history = await getPublicPriceHistory(ticker, period);
+    if (res.headersSent) {
+      return;
+    }
+    res.json({
+      asOf: new Date().toISOString(),
+      ticker,
+      ...history
+    });
+  } catch (error) {
+    if (res.headersSent) {
+      return;
+    }
+    res.status(502).json({
+      message: "Unable to fetch stock history",
+      ticker,
+      period,
+      error: error?.message || "Unknown provider error"
+    });
+  }
 });
 
 app.get("/api/subsegments/:id/export", async (req, res) => {
@@ -354,8 +532,18 @@ app.get("/api/subsegments/:id/export", async (req, res) => {
     return;
   }
 
-  const enriched = await enrichCompanies(subsegment.companies);
-  const selected = view === "top5" ? enriched.slice(0, 5) : enriched;
+  const segmentSubs = getSubsegments().filter((item) => item.segmentId === subsegment.segmentId);
+  const rankedById = new Map(
+    await Promise.all(
+      segmentSubs.map(async (item) => {
+        const enriched = await enrichCompanies(item.companies);
+        return [item.id, rankCompaniesByMarketCap(enriched)];
+      })
+    )
+  );
+  const augmentedById = buildAugmentedCompaniesBySubsegment(subsegment.segmentId, segmentSubs, rankedById);
+  const rankedCompanies = augmentedById.get(subsegment.id) || [];
+  const selected = view === "top5" ? rankedCompanies.slice(0, 5) : rankedCompanies;
   const rows = formatSubsegmentExportRows(subsegment, selected);
 
   if (format === "json") {
@@ -396,6 +584,16 @@ app.get("/api/subsegments/:id/export", async (req, res) => {
   res.send(csv);
 });
 
+app.get("/api/refresh-history", (_req, res) => {
+  const added = getLastAddedCompanies(10);
+  const removed = getLastRemovedCompanies(10);
+  res.json({
+    asOf: new Date().toISOString(),
+    addedCompanies: added,
+    removedCompanies: removed
+  });
+});
+
 app.get("*", (_req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
@@ -406,4 +604,5 @@ validatePublicListingShape();
 
 app.listen(port, () => {
   console.log(`AI Value Chain Dashboard running on http://localhost:${port}`);
+  scheduleWeeklyRefresh(enrichCompanies);
 });

@@ -222,6 +222,89 @@ const mapYahooSparkQuote = (result) => {
   };
 };
 
+const HISTORY_PERIODS = {
+  "1d": { range: "1d", interval: "5m" },
+  "1w": { range: "5d", interval: "15m" },
+  "1m": { range: "1mo", interval: "1d" },
+  "3m": { range: "3mo", interval: "1d" },
+  "6m": { range: "6mo", interval: "1d" },
+  "1y": { range: "1y", interval: "1d" },
+  "2y": { range: "2y", interval: "1wk" },
+  "3y": { range: "3y", interval: "1wk" },
+  "5y": { range: "5y", interval: "1wk" }
+};
+
+const buildHistoryFromYahooChart = (body, period) => {
+  const result = body?.chart?.result?.[0] || {};
+  const meta = result?.meta || {};
+  const timestamps = Array.isArray(result?.timestamp) ? result.timestamp : [];
+  const quote = result?.indicators?.quote?.[0] || {};
+  const closes = Array.isArray(quote?.close) ? quote.close : [];
+
+  const points = [];
+  for (let i = 0; i < timestamps.length; i += 1) {
+    const ts = Number(timestamps[i]);
+    const close = Number(closes[i]);
+    if (!Number.isFinite(ts) || !Number.isFinite(close)) {
+      continue;
+    }
+    points.push({
+      time: new Date(ts * 1000).toISOString(),
+      close
+    });
+  }
+
+  return {
+    period,
+    currency: meta.currency || "USD",
+    points,
+    metrics: {
+      regularMarketPrice: Number.isFinite(meta.regularMarketPrice) ? Number(meta.regularMarketPrice) : null,
+      previousClose: Number.isFinite(meta.previousClose) ? Number(meta.previousClose) : null,
+      chartPreviousClose: Number.isFinite(meta.chartPreviousClose) ? Number(meta.chartPreviousClose) : null,
+      regularMarketOpen: Number.isFinite(meta.regularMarketOpen) ? Number(meta.regularMarketOpen) : null,
+      regularMarketDayLow: Number.isFinite(meta.regularMarketDayLow) ? Number(meta.regularMarketDayLow) : null,
+      regularMarketDayHigh: Number.isFinite(meta.regularMarketDayHigh) ? Number(meta.regularMarketDayHigh) : null,
+      fiftyTwoWeekLow: Number.isFinite(meta.fiftyTwoWeekLow) ? Number(meta.fiftyTwoWeekLow) : null,
+      fiftyTwoWeekHigh: Number.isFinite(meta.fiftyTwoWeekHigh) ? Number(meta.fiftyTwoWeekHigh) : null,
+      regularMarketVolume: Number.isFinite(meta.regularMarketVolume) ? Number(meta.regularMarketVolume) : null,
+      averageDailyVolume3Month: Number.isFinite(meta.averageDailyVolume3Month)
+        ? Number(meta.averageDailyVolume3Month)
+        : null,
+      regularMarketTime: Number.isFinite(meta.regularMarketTime)
+        ? new Date(Number(meta.regularMarketTime) * 1000).toISOString()
+        : null
+    }
+  };
+};
+
+export const getPublicPriceHistory = async (symbol, period = "1m") => {
+  const normalizedPeriod = HISTORY_PERIODS[period] ? period : "1m";
+  const cacheKey = `history:${String(symbol || "").toUpperCase()}:${normalizedPeriod}`;
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const config = HISTORY_PERIODS[normalizedPeriod];
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${encodeURIComponent(config.range)}&interval=${encodeURIComponent(config.interval)}`;
+  const body = await fetchJsonWithRetry(
+    url,
+    {
+      headers: { "User-Agent": "Mozilla/5.0" }
+    },
+    {
+      timeoutMs: PROVIDER_TIMEOUT_MS,
+      label: "Yahoo history",
+      retries: 2
+    }
+  );
+
+  const history = buildHistoryFromYahooChart(body, normalizedPeriod);
+  cache.set(cacheKey, history);
+  return history;
+};
+
 const fetchYahooSparkBatch = async (entries) => {
   const output = new Map();
 

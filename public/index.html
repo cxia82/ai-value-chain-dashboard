@@ -56,7 +56,13 @@
         </label>
         <label class="search-label">
           Company Search
-          <input id="filter-search" type="search" placeholder="Search name or ticker" />
+          <div class="search-wrapper">
+            <div class="search-row">
+              <input id="filter-search" type="text" placeholder="Search name or ticker" autocomplete="off" />
+              <div id="search-performance" class="search-performance" hidden></div>
+            </div>
+            <div id="search-dropdown" class="search-dropdown" hidden></div>
+          </div>
         </label>
       </section>
       <section id="leaderboard" class="leaderboard"></section>
@@ -96,6 +102,20 @@
         <button class="expand-btn" type="button"></button>
       </section>
     </template>
+
+    <section id="refresh-log" class="refresh-log">
+      <h3>Company Updates</h3>
+      <div class="refresh-log-columns">
+        <div class="refresh-log-column">
+          <h4>Added</h4>
+          <div id="refresh-log-added" class="refresh-log-list"></div>
+        </div>
+        <div class="refresh-log-column">
+          <h4>Removed</h4>
+          <div id="refresh-log-removed" class="refresh-log-list"></div>
+        </div>
+      </div>
+    </section>
 
     <script type="module" src="/app.js"></script>
   </body>

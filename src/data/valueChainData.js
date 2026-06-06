@@ -16,7 +16,7 @@ const privateCo = (rank, name, valuationUsdBn, valuationDate, notes) => ({
   notes
 });
 
-const subsegments = [
+const baseSubsegments = [
   {
     id: "ai-accelerators-gpus",
     segmentId: "compute-infrastructure",
@@ -111,7 +111,7 @@ const subsegments = [
       publicCo(2, "SK Hynix", "000660.KS", "KRX", "HBM memory leader"),
       publicCo(3, "Micron", "MU", "NASDAQ", "HBM and DRAM supplier"),
       publicCo(4, "Kioxia", "285A.T", "TSE", "NAND flash producer"),
-      publicCo(5, "Western Digital", "WDC", "NASDAQ", "NAND and storage platforms"),
+      publicCo(5, "Sandisk", "SNDK", "NASDAQ", "NAND flash and SSD products"),
       publicCo(6, "Seagate", "STX", "NASDAQ", "AI storage infrastructure"),
       publicCo(7, "Nanya Technology", "2408.TW", "TWSE", "DRAM manufacturer"),
       publicCo(8, "Winbond", "2344.TW", "TWSE", "Specialty memory supplier"),
@@ -439,6 +439,211 @@ const subsegments = [
   }
 ];
 
+const normalizeCompanyName = (value) => String(value || "").trim().toLowerCase();
+
+const rerankCompanies = (companies) => companies.map((company, index) => ({
+  ...company,
+  rank: index + 1
+}));
+
+const splitSubsegmentByCompanyNames = ({
+  sourceId,
+  leftId,
+  leftName,
+  leftDescription,
+  leftCompanyNames,
+  rightId,
+  rightName,
+  rightDescription
+}) => {
+  const source = baseSubsegments.find((subsegment) => subsegment.id === sourceId);
+  if (!source) {
+    throw new Error(`Unknown source subsegment: ${sourceId}`);
+  }
+
+  const leftNameSet = new Set(leftCompanyNames.map(normalizeCompanyName));
+  const availableNames = new Set(source.companies.map((company) => normalizeCompanyName(company.name)));
+  const missing = [...leftNameSet].filter((name) => !availableNames.has(name));
+
+  if (missing.length > 0) {
+    throw new Error(`Unknown company names in split for ${sourceId}: ${missing.join(", ")}`);
+  }
+
+  const leftCompanies = source.companies.filter((company) => leftNameSet.has(normalizeCompanyName(company.name)));
+  const rightCompanies = source.companies.filter((company) => !leftNameSet.has(normalizeCompanyName(company.name)));
+
+  return [
+    {
+      id: leftId,
+      segmentId: source.segmentId,
+      name: leftName,
+      description: leftDescription,
+      companies: rerankCompanies(leftCompanies)
+    },
+    {
+      id: rightId,
+      segmentId: source.segmentId,
+      name: rightName,
+      description: rightDescription,
+      companies: rerankCompanies(rightCompanies)
+    }
+  ];
+};
+
+const granularUpstreamAndCoreSubsegments = [
+  ...splitSubsegmentByCompanyNames({
+    sourceId: "ai-accelerators-gpus",
+    leftId: "training-accelerators-data-center",
+    leftName: "Training Accelerators (Data Center)",
+    leftDescription: "GPU and ASIC vendors focused on large-scale AI training workloads.",
+    leftCompanyNames: [
+      "NVIDIA", "AMD", "Broadcom", "Marvell", "Intel", "Cambricon", "Cerebras", "SambaNova", "Tenstorrent", "Enflame"
+    ],
+    rightId: "inference-edge-ai-silicon",
+    rightName: "Inference & Edge AI Silicon",
+    rightDescription: "Inference-focused and edge-deployed AI silicon providers."
+  }),
+  ...splitSubsegmentByCompanyNames({
+    sourceId: "semiconductor-equipment-eda",
+    leftId: "wafer-fabrication-equipment",
+    leftName: "Wafer Fabrication Equipment",
+    leftDescription: "Lithography, etch, deposition, and fab subsystem equipment suppliers.",
+    leftCompanyNames: [
+      "ASML", "Applied Materials", "Lam Research", "KLA", "Tokyo Electron", "ASM International", "Axcelis", "Disco", "Ultra Clean", "Onto Innovation"
+    ],
+    rightId: "eda-test-yield-software",
+    rightName: "EDA, Test & Yield Software",
+    rightDescription: "Design automation, test, and process/yield software ecosystem."
+  }),
+  ...splitSubsegmentByCompanyNames({
+    sourceId: "foundry-advanced-packaging",
+    leftId: "logic-specialty-foundries",
+    leftName: "Logic & Specialty Foundries",
+    leftDescription: "Pure-play foundry capacity for leading-edge and specialty process nodes.",
+    leftCompanyNames: [
+      "TSMC", "GlobalFoundries", "UMC", "SMIC", "Tower Semiconductor", "Hua Hong Semiconductor", "Powerchip", "Vanguard International", "X-FAB", "PSMC"
+    ],
+    rightId: "advanced-packaging-wafer-materials",
+    rightName: "Advanced Packaging & Wafer Materials",
+    rightDescription: "OSAT packaging and critical wafer/material infrastructure suppliers."
+  }),
+  ...splitSubsegmentByCompanyNames({
+    sourceId: "memory-hbm-storage",
+    leftId: "dram-hbm-memory-makers",
+    leftName: "DRAM, HBM & Memory Makers",
+    leftDescription: "Core memory producers for AI training and inference capacity.",
+    leftCompanyNames: [
+      "Samsung Electronics", "SK Hynix", "Micron", "Nanya Technology", "Winbond", "Macronix", "GigaDevice", "YMTC", "CXMT", "Netlist"
+    ],
+    rightId: "nvm-storage-controllers",
+    rightName: "NVM Storage & Controllers",
+    rightDescription: "NAND, storage systems, and controller/IP vendors for AI data stacks."
+  }),
+  ...splitSubsegmentByCompanyNames({
+    sourceId: "datacenter-networking-interconnect",
+    leftId: "networking-systems-platforms",
+    leftName: "Networking Systems & Platforms",
+    leftDescription: "Switching, routing, and network platform operators for AI clusters.",
+    leftCompanyNames: [
+      "Arista Networks", "Cisco Systems", "Ubiquiti", "Ciena", "Infinera", "Nokia", "Ericsson", "Extreme Networks", "CommScope", "F5"
+    ],
+    rightId: "optical-interconnect-components",
+    rightName: "Optical & Interconnect Components",
+    rightDescription: "Optical modules, PHY/connectivity, and component supply chain providers."
+  }),
+  ...splitSubsegmentByCompanyNames({
+    sourceId: "datacenter-power-cooling-servers",
+    leftId: "datacenter-power-thermal",
+    leftName: "Data Center Power & Thermal",
+    leftDescription: "Power distribution, backup, and thermal systems for AI data centers.",
+    leftCompanyNames: [
+      "Vertiv", "Schneider Electric", "Eaton", "Emerson Electric", "nVent", "Legrand", "Generac", "Modine Manufacturing", "Trane Technologies", "Carrier Global"
+    ],
+    rightId: "ai-server-oems-integrators",
+    rightName: "AI Server OEMs & Integrators",
+    rightDescription: "Server OEMs and systems integrators delivering AI compute deployments."
+  }),
+  ...splitSubsegmentByCompanyNames({
+    sourceId: "hyperscale-ai-cloud",
+    leftId: "global-hyperscale-ai-cloud",
+    leftName: "Global Hyperscale AI Cloud",
+    leftDescription: "Global-scale cloud providers operating broad AI IaaS and PaaS platforms.",
+    leftCompanyNames: [
+      "Microsoft", "Amazon", "Alphabet", "Oracle", "IBM", "Alibaba", "Tencent", "Baidu", "SAP", "JD.com"
+    ],
+    rightId: "sovereign-regional-ai-cloud",
+    rightName: "Sovereign & Regional AI Cloud",
+    rightDescription: "Regional and sovereign cloud operators with AI-focused infrastructure."
+  }),
+  ...splitSubsegmentByCompanyNames({
+    sourceId: "cloud-hosting-gpu",
+    leftId: "gpu-neocloud-providers",
+    leftName: "GPU Neocloud Providers",
+    leftDescription: "GPU-first independent cloud providers optimized for AI workloads.",
+    leftCompanyNames: [
+      "CoreWeave", "Lambda", "Crusoe", "Fluidstack", "Runpod", "Vast.ai", "Lepton AI", "Paperspace", "Nebius", "Replicate Cloud"
+    ],
+    rightId: "developer-edge-managed-cloud",
+    rightName: "Developer, Edge & Managed Cloud",
+    rightDescription: "Developer clouds, edge compute, and managed hosting platforms."
+  }),
+  ...splitSubsegmentByCompanyNames({
+    sourceId: "data-mlops-platforms",
+    leftId: "data-platforms-analytics-ai",
+    leftName: "Data Platforms & Analytics AI",
+    leftDescription: "Data warehousing, lakehouse, and analytics platforms for enterprise AI.",
+    leftCompanyNames: [
+      "Databricks", "Snowflake", "Palantir", "MongoDB", "Elastic", "Confluent", "ServiceNow", "Scale AI", "Dataiku", "H2O.ai"
+    ],
+    rightId: "mlops-observability-governance",
+    rightName: "MLOps, Observability & Governance",
+    rightDescription: "Model development, deployment, observability, and governance tooling."
+  }),
+  ...splitSubsegmentByCompanyNames({
+    sourceId: "frontier-model-labs",
+    leftId: "closed-frontier-model-labs",
+    leftName: "Closed Frontier Model Labs",
+    leftDescription: "Labs primarily commercializing closed-weight frontier model systems.",
+    leftCompanyNames: [
+      "OpenAI", "Anthropic", "xAI", "Cohere", "AI21 Labs", "Adept", "Inflection AI", "Character.AI", "Perplexity", "MiniMax"
+    ],
+    rightId: "open-sovereign-frontier-labs",
+    rightName: "Open & Sovereign Frontier Labs",
+    rightDescription: "Open-weight and sovereign frontier model labs and ecosystems."
+  }),
+  ...splitSubsegmentByCompanyNames({
+    sourceId: "ai-developer-platforms",
+    leftId: "model-serving-api-platforms",
+    leftName: "Model Serving & API Platforms",
+    leftDescription: "Inference, routing, and production API platforms for AI models.",
+    leftCompanyNames: [
+      "Fireworks AI", "Voyage AI", "AssemblyAI", "Unstructured", "Predibase", "OpenPipe", "OpenRouter", "Replicate", "Together AI", "Baseten"
+    ],
+    rightId: "agent-rag-developer-tooling",
+    rightName: "Agent, RAG & Developer Tooling",
+    rightDescription: "Agent orchestration, RAG infrastructure, and developer productivity tools."
+  })
+];
+
+const granularizedSourceIds = new Set([
+  "ai-accelerators-gpus",
+  "semiconductor-equipment-eda",
+  "foundry-advanced-packaging",
+  "memory-hbm-storage",
+  "datacenter-networking-interconnect",
+  "datacenter-power-cooling-servers",
+  "hyperscale-ai-cloud",
+  "cloud-hosting-gpu",
+  "data-mlops-platforms",
+  "frontier-model-labs",
+  "ai-developer-platforms"
+]);
+
+const subsegments = [
+  ...granularUpstreamAndCoreSubsegments,
+  ...baseSubsegments.filter((subsegment) => !granularizedSourceIds.has(subsegment.id))
+];
+
 const segments = [
   {
     id: "compute-infrastructure",
@@ -446,12 +651,18 @@ const segments = [
     stage: "Upstream",
     summary: "Semiconductor, networking, and physical infrastructure foundation for AI compute.",
     subsegmentIds: [
-      "ai-accelerators-gpus",
-      "semiconductor-equipment-eda",
-      "foundry-advanced-packaging",
-      "memory-hbm-storage",
-      "datacenter-networking-interconnect",
-      "datacenter-power-cooling-servers"
+      "training-accelerators-data-center",
+      "inference-edge-ai-silicon",
+      "wafer-fabrication-equipment",
+      "eda-test-yield-software",
+      "logic-specialty-foundries",
+      "advanced-packaging-wafer-materials",
+      "dram-hbm-memory-makers",
+      "nvm-storage-controllers",
+      "networking-systems-platforms",
+      "optical-interconnect-components",
+      "datacenter-power-thermal",
+      "ai-server-oems-integrators"
     ]
   },
   {
@@ -459,14 +670,26 @@ const segments = [
     name: "Cloud & AI Platform Layer",
     stage: "Core Platform",
     summary: "Hyperscale platforms, specialized hosting clouds, and AI operations stack.",
-    subsegmentIds: ["hyperscale-ai-cloud", "cloud-hosting-gpu", "data-mlops-platforms"]
+    subsegmentIds: [
+      "global-hyperscale-ai-cloud",
+      "sovereign-regional-ai-cloud",
+      "gpu-neocloud-providers",
+      "developer-edge-managed-cloud",
+      "data-platforms-analytics-ai",
+      "mlops-observability-governance"
+    ]
   },
   {
     id: "foundation-models",
     name: "Foundation Models & Middleware",
     stage: "Core Platform",
     summary: "Frontier model creation and API/middleware distribution.",
-    subsegmentIds: ["frontier-model-labs", "ai-developer-platforms"]
+    subsegmentIds: [
+      "closed-frontier-model-labs",
+      "open-sovereign-frontier-labs",
+      "model-serving-api-platforms",
+      "agent-rag-developer-tooling"
+    ]
   },
   {
     id: "downstream-apps",

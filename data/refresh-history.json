@@ -1,0 +1,657 @@
+{
+  "removedCompanies": [
+    {
+      "name": "DJI",
+      "ticker": null,
+      "subsegmentName": "Edge AI Devices & OEM",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.810Z"
+    },
+    {
+      "name": "Nothing",
+      "ticker": null,
+      "subsegmentName": "Edge AI Devices & OEM",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.810Z"
+    },
+    {
+      "name": "Humane",
+      "ticker": null,
+      "subsegmentName": "Edge AI Devices & OEM",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.810Z"
+    },
+    {
+      "name": "Pony.ai",
+      "ticker": null,
+      "subsegmentName": "Autonomous Systems & Robotics",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.800Z"
+    },
+    {
+      "name": "Cruise",
+      "ticker": null,
+      "subsegmentName": "Autonomous Systems & Robotics",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.800Z"
+    },
+    {
+      "name": "Zipline",
+      "ticker": null,
+      "subsegmentName": "Autonomous Systems & Robotics",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.800Z"
+    },
+    {
+      "name": "Nuro",
+      "ticker": null,
+      "subsegmentName": "Autonomous Systems & Robotics",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.800Z"
+    },
+    {
+      "name": "Skydio",
+      "ticker": null,
+      "subsegmentName": "Autonomous Systems & Robotics",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.800Z"
+    },
+    {
+      "name": "Replika",
+      "ticker": null,
+      "subsegmentName": "Consumer AI Assistants & Search",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.791Z"
+    },
+    {
+      "name": "Quora Poe",
+      "ticker": null,
+      "subsegmentName": "Consumer AI Assistants & Search",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.791Z"
+    },
+    {
+      "name": "You.com",
+      "ticker": null,
+      "subsegmentName": "Consumer AI Assistants & Search",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.791Z"
+    },
+    {
+      "name": "Phind",
+      "ticker": null,
+      "subsegmentName": "Consumer AI Assistants & Search",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.791Z"
+    },
+    {
+      "name": "Canva",
+      "ticker": null,
+      "subsegmentName": "AI-Native Enterprise Applications",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.782Z"
+    },
+    {
+      "name": "Grammarly",
+      "ticker": null,
+      "subsegmentName": "AI-Native Enterprise Applications",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.782Z"
+    },
+    {
+      "name": "Jasper",
+      "ticker": null,
+      "subsegmentName": "AI-Native Enterprise Applications",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.782Z"
+    },
+    {
+      "name": "Humanloop",
+      "ticker": null,
+      "subsegmentName": "Agent, RAG & Developer Tooling",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.772Z"
+    },
+    {
+      "name": "Lamatic",
+      "ticker": null,
+      "subsegmentName": "Agent, RAG & Developer Tooling",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.772Z"
+    },
+    {
+      "name": "Modal",
+      "ticker": null,
+      "subsegmentName": "Agent, RAG & Developer Tooling",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.772Z"
+    },
+    {
+      "name": "Pinecone",
+      "ticker": null,
+      "subsegmentName": "Agent, RAG & Developer Tooling",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.772Z"
+    },
+    {
+      "name": "Weaviate",
+      "ticker": null,
+      "subsegmentName": "Agent, RAG & Developer Tooling",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.772Z"
+    },
+    {
+      "name": "LangChain",
+      "ticker": null,
+      "subsegmentName": "Agent, RAG & Developer Tooling",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.772Z"
+    },
+    {
+      "name": "LlamaIndex",
+      "ticker": null,
+      "subsegmentName": "Agent, RAG & Developer Tooling",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.772Z"
+    },
+    {
+      "name": "Hugging Face Inference",
+      "ticker": null,
+      "subsegmentName": "Agent, RAG & Developer Tooling",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.772Z"
+    },
+    {
+      "name": "OpenPipe",
+      "ticker": null,
+      "subsegmentName": "Model Serving & API Platforms",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.758Z"
+    },
+    {
+      "name": "OpenRouter",
+      "ticker": null,
+      "subsegmentName": "Model Serving & API Platforms",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.758Z"
+    },
+    {
+      "name": "Replicate",
+      "ticker": null,
+      "subsegmentName": "Model Serving & API Platforms",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.758Z"
+    },
+    {
+      "name": "Moonshot AI",
+      "ticker": null,
+      "subsegmentName": "Open & Sovereign Frontier Labs",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.747Z"
+    },
+    {
+      "name": "Zhipu AI",
+      "ticker": null,
+      "subsegmentName": "Open & Sovereign Frontier Labs",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.747Z"
+    },
+    {
+      "name": "01.AI",
+      "ticker": null,
+      "subsegmentName": "Open & Sovereign Frontier Labs",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.747Z"
+    },
+    {
+      "name": "Aleph Alpha",
+      "ticker": null,
+      "subsegmentName": "Open & Sovereign Frontier Labs",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.747Z"
+    },
+    {
+      "name": "Stability AI",
+      "ticker": null,
+      "subsegmentName": "Open & Sovereign Frontier Labs",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.747Z"
+    },
+    {
+      "name": "Reka AI",
+      "ticker": null,
+      "subsegmentName": "Open & Sovereign Frontier Labs",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.747Z"
+    },
+    {
+      "name": "AI21 Labs",
+      "ticker": null,
+      "subsegmentName": "Closed Frontier Model Labs",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.739Z"
+    },
+    {
+      "name": "Adept",
+      "ticker": null,
+      "subsegmentName": "Closed Frontier Model Labs",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.739Z"
+    },
+    {
+      "name": "Inflection AI",
+      "ticker": null,
+      "subsegmentName": "Closed Frontier Model Labs",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.739Z"
+    },
+    {
+      "name": "Hugging Face",
+      "ticker": null,
+      "subsegmentName": "MLOps, Observability & Governance",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.722Z"
+    },
+    {
+      "name": "Weights & Biases",
+      "ticker": null,
+      "subsegmentName": "MLOps, Observability & Governance",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.722Z"
+    },
+    {
+      "name": "Anyscale",
+      "ticker": null,
+      "subsegmentName": "MLOps, Observability & Governance",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.722Z"
+    },
+    {
+      "name": "Domino Data Lab",
+      "ticker": null,
+      "subsegmentName": "MLOps, Observability & Governance",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.722Z"
+    },
+    {
+      "name": "OctoAI",
+      "ticker": null,
+      "subsegmentName": "MLOps, Observability & Governance",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.722Z"
+    },
+    {
+      "name": "Seldon",
+      "ticker": null,
+      "subsegmentName": "MLOps, Observability & Governance",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.722Z"
+    },
+    {
+      "name": "Fiddler",
+      "ticker": null,
+      "subsegmentName": "MLOps, Observability & Governance",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.722Z"
+    },
+    {
+      "name": "Confluent",
+      "ticker": "CFLT",
+      "subsegmentName": "Data Platforms & Analytics AI",
+      "reason": "non-tradable",
+      "removedDate": "2026-06-06T15:04:18.709Z"
+    },
+    {
+      "name": "Dataiku",
+      "ticker": null,
+      "subsegmentName": "Data Platforms & Analytics AI",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.709Z"
+    },
+    {
+      "name": "H2O.ai",
+      "ticker": null,
+      "subsegmentName": "Data Platforms & Analytics AI",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.709Z"
+    },
+    {
+      "name": "Vultr",
+      "ticker": null,
+      "subsegmentName": "Developer, Edge & Managed Cloud",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.246Z"
+    },
+    {
+      "name": "Hetzner",
+      "ticker": null,
+      "subsegmentName": "Developer, Edge & Managed Cloud",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.246Z"
+    },
+    {
+      "name": "Genesis Cloud",
+      "ticker": null,
+      "subsegmentName": "Developer, Edge & Managed Cloud",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.246Z"
+    },
+    {
+      "name": "Latitude.sh",
+      "ticker": null,
+      "subsegmentName": "Developer, Edge & Managed Cloud",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.246Z"
+    },
+    {
+      "name": "Modal Labs",
+      "ticker": null,
+      "subsegmentName": "Developer, Edge & Managed Cloud",
+      "reason": "inactive",
+      "removedDate": "2026-06-06T15:04:18.246Z"
+    }
+  ],
+  "lastRefreshDate": "2026-06-06T15:04:18.818Z",
+  "addedCompanies": [
+    {
+      "name": "FuriosaAI",
+      "ticker": null,
+      "subsegmentName": "Training Accelerators (Data Center)",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "ACM Research",
+      "ticker": "ACMR",
+      "subsegmentName": "Inference & Edge AI Silicon",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "NAURA Technology",
+      "ticker": "002371.SZ",
+      "subsegmentName": "Inference & Edge AI Silicon",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Ichor Holdings",
+      "ticker": "ICHR",
+      "subsegmentName": "Inference & Edge AI Silicon",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Cabot Microelectronics",
+      "ticker": "CCMP",
+      "subsegmentName": "Inference & Edge AI Silicon",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Onto Innovation",
+      "ticker": "ONTO",
+      "subsegmentName": "Inference & Edge AI Silicon",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Amtech Systems",
+      "ticker": "ASYS",
+      "subsegmentName": "Inference & Edge AI Silicon",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Cello Energy",
+      "ticker": null,
+      "subsegmentName": "Inference & Edge AI Silicon",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "DB HiTek",
+      "ticker": "000990.KS",
+      "subsegmentName": "Wafer Fabrication Equipment",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Vanguard International Semiconductor",
+      "ticker": "5347.TWO",
+      "subsegmentName": "Logic & Specialty Foundries",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "JCET Group",
+      "ticker": "600584.SS",
+      "subsegmentName": "Advanced Packaging & Wafer Materials",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Tongfu Microelectronics",
+      "ticker": "002156.SZ",
+      "subsegmentName": "Advanced Packaging & Wafer Materials",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "King Yuan Electronics",
+      "ticker": "2449.TW",
+      "subsegmentName": "Advanced Packaging & Wafer Materials",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Everspin Technologies",
+      "ticker": "MRAM",
+      "subsegmentName": "DRAM, HBM & Memory Makers",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "ISSI",
+      "ticker": "ISSI",
+      "subsegmentName": "DRAM, HBM & Memory Makers",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Pure Storage",
+      "ticker": "PSTG",
+      "subsegmentName": "NVM Storage & Controllers",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "NetApp",
+      "ticker": "NTAP",
+      "subsegmentName": "NVM Storage & Controllers",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Phison Electronics",
+      "ticker": "8299.TW",
+      "subsegmentName": "NVM Storage & Controllers",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Calix",
+      "ticker": "CALX",
+      "subsegmentName": "Networking Systems & Platforms",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "ADTRAN",
+      "ticker": "ADTN",
+      "subsegmentName": "Networking Systems & Platforms",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Viavi Solutions",
+      "ticker": "VIAV",
+      "subsegmentName": "Optical & Interconnect Components",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Lenovo Group",
+      "ticker": "0992.HK",
+      "subsegmentName": "AI Server OEMs & Integrators",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Quanta Computer",
+      "ticker": null,
+      "subsegmentName": "AI Server OEMs & Integrators",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Wistron",
+      "ticker": null,
+      "subsegmentName": "AI Server OEMs & Integrators",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Inventec",
+      "ticker": null,
+      "subsegmentName": "AI Server OEMs & Integrators",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Wiwynn",
+      "ticker": null,
+      "subsegmentName": "AI Server OEMs & Integrators",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Scaleway",
+      "ticker": null,
+      "subsegmentName": "Sovereign & Regional AI Cloud",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Cudo Compute",
+      "ticker": null,
+      "subsegmentName": "GPU Neocloud Providers",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "TensorDock",
+      "ticker": null,
+      "subsegmentName": "GPU Neocloud Providers",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Salad Technologies",
+      "ticker": null,
+      "subsegmentName": "GPU Neocloud Providers",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Hyperbolic",
+      "ticker": null,
+      "subsegmentName": "GPU Neocloud Providers",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Shadeform",
+      "ticker": null,
+      "subsegmentName": "GPU Neocloud Providers",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "JarvisLabs",
+      "ticker": null,
+      "subsegmentName": "GPU Neocloud Providers",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Voltage Park",
+      "ticker": null,
+      "subsegmentName": "GPU Neocloud Providers",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Akamai Technologies",
+      "ticker": "AKAM",
+      "subsegmentName": "Developer, Edge & Managed Cloud",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Fly.io",
+      "ticker": null,
+      "subsegmentName": "Developer, Edge & Managed Cloud",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Render",
+      "ticker": null,
+      "subsegmentName": "Developer, Edge & Managed Cloud",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Vercel",
+      "ticker": null,
+      "subsegmentName": "Developer, Edge & Managed Cloud",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Netlify",
+      "ticker": null,
+      "subsegmentName": "Developer, Edge & Managed Cloud",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Confluent",
+      "ticker": "CFLT",
+      "subsegmentName": "Data Platforms & Analytics AI",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "C3.ai",
+      "ticker": "AI",
+      "subsegmentName": "Data Platforms & Analytics AI",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Palantir AIP",
+      "ticker": null,
+      "subsegmentName": "Data Platforms & Analytics AI",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "New Relic",
+      "ticker": "NR",
+      "subsegmentName": "MLOps, Observability & Governance",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Dynatrace",
+      "ticker": "DT",
+      "subsegmentName": "MLOps, Observability & Governance",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Splunk",
+      "ticker": "SPLK",
+      "subsegmentName": "MLOps, Observability & Governance",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Informatica",
+      "ticker": "INFA",
+      "subsegmentName": "MLOps, Observability & Governance",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Arize AI",
+      "ticker": null,
+      "subsegmentName": "MLOps, Observability & Governance",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "WhyLabs",
+      "ticker": null,
+      "subsegmentName": "MLOps, Observability & Governance",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Comet ML",
+      "ticker": null,
+      "subsegmentName": "MLOps, Observability & Governance",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    },
+    {
+      "name": "Safe Superintelligence",
+      "ticker": null,
+      "subsegmentName": "Closed Frontier Model Labs",
+      "addedDate": "2026-06-06T15:04:18.818Z"
+    }
+  ]
+}

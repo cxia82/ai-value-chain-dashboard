@@ -2,6 +2,8 @@ const state = {
   expandedSubsegments: new Set(),
   fullSubsegmentData: new Map(),
   latestPayload: null,
+  companyIndex: [],
+  drawerRequestSeq: 0,
   filters: {
     stage: "all",
     listing: "all",
@@ -34,6 +36,16 @@ const fmtNumber = (value) => {
     return "N/A";
   }
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value);
+};
+
+const fmtCompactNumber = (value) => {
+  if (!Number.isFinite(value)) {
+    return "N/A";
+  }
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 2
+  }).format(value);
 };
 
 const fmtCurrency = (value, currency = "USD") => {
@@ -76,6 +88,15 @@ const fmtDateTime = (value) => {
     return "N/A";
   }
   return date.toLocaleString();
+};
+
+const fmtRemovalDate = (isoDate) => {
+  try {
+    const date = new Date(isoDate);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" });
+  } catch {
+    return "N/A";
+  }
 };
 
 const formatChangeClass = (pct) => {
@@ -174,6 +195,195 @@ const rowHtml = (company, subsegmentId) => {
   `;
 };
 
+const buildCompanyIndex = (companies) => {
+  const seen = new Set();
+  const index = [];
+  companies.forEach((company) => {
+    const name = String(company.name || "").trim();
+    if (!name) {
+      return;
+    }
+    const key = name.toLowerCase();
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    index.push(company);
+  });
+  index.sort((a, b) => a.name.localeCompare(b.name));
+  return index;
+};
+
+const loadCompanyIndex = async () => {
+  try {
+    const response = await fetch("/api/companies");
+    if (!response.ok) {
+      return;
+    }
+    const body = await response.json();
+    state.companyIndex = buildCompanyIndex(body.companies || []);
+  } catch {
+    // Index is a best-effort enhancement; ignore failures.
+  }
+};
+
+const getSearchMatches = () => {
+  const query = String(state.filters.search || "").trim().toLowerCase();
+  if (query.length === 0) {
+    return [];
+  }
+  return state.companyIndex
+    .filter((company) => {
+      const name = String(company.name || "").toLowerCase();
+      const ticker = String(company.ticker || "").toLowerCase();
+      return name.includes(query) || ticker.includes(query);
+    })
+    .slice(0, 12);
+};
+
+let dropdownSelectedIndex = -1;
+
+const renderSearchDropdown = () => {
+  const dropdown = document.querySelector("#search-dropdown");
+  if (!dropdown) {
+    return;
+  }
+  const matches = getSearchMatches();
+  dropdownSelectedIndex = -1;
+
+  if (matches.length === 0) {
+    dropdown.hidden = true;
+    dropdown.innerHTML = "";
+    return;
+  }
+
+  dropdown.innerHTML = matches
+    .map((company, index) => {
+      const meta = company.isPublic && company.ticker
+        ? `${company.exchange}:${company.ticker}`
+        : "Private";
+      return `
+        <div class="search-dropdown-item" data-index="${index}">
+          <div class="search-dropdown-item-name">${company.name}</div>
+          <div class="search-dropdown-item-meta">${meta}</div>
+        </div>
+      `;
+    })
+    .join("");
+
+  dropdown.hidden = false;
+
+  dropdown.querySelectorAll(".search-dropdown-item").forEach((item) => {
+    item.addEventListener("click", () => {
+      const idx = parseInt(item.getAttribute("data-index"), 10);
+      const company = matches[idx];
+      if (company) {
+        document.querySelector("#filter-search").value = company.name;
+        state.filters.search = company.name;
+        renderSearchDropdown();
+        renderSearchPerformance();
+        render(state.latestPayload);
+      }
+    });
+  });
+};
+
+const updateDropdownSelection = (newIndex) => {
+  const dropdown = document.querySelector("#search-dropdown");
+  const matches = getSearchMatches();
+
+  if (newIndex < -1 || newIndex >= matches.length) {
+    return;
+  }
+
+  dropdown.querySelectorAll(".search-dropdown-item").forEach((item, idx) => {
+    if (idx === newIndex) {
+      item.classList.add("selected");
+      item.scrollIntoView({ block: "nearest" });
+    } else {
+      item.classList.remove("selected");
+    }
+  });
+
+  dropdownSelectedIndex = newIndex;
+};
+
+const handleSearchKeydown = (event) => {
+  const dropdown = document.querySelector("#search-dropdown");
+  const matches = getSearchMatches();
+
+  if (event.key === "ArrowDown") {
+    event.preventDefault();
+    updateDropdownSelection(dropdownSelectedIndex + 1);
+  } else if (event.key === "ArrowUp") {
+    event.preventDefault();
+    updateDropdownSelection(dropdownSelectedIndex - 1);
+  } else if (event.key === "Enter") {
+    if (dropdownSelectedIndex >= 0 && dropdownSelectedIndex < matches.length) {
+      event.preventDefault();
+      const company = matches[dropdownSelectedIndex];
+      document.querySelector("#filter-search").value = company.name;
+      state.filters.search = company.name;
+      renderSearchDropdown();
+      renderSearchPerformance();
+      render(state.latestPayload);
+    }
+  } else if (event.key === "Escape") {
+    dropdown.hidden = true;
+  }
+};
+
+const renderSearchPerformance = () => {
+  const panel = document.querySelector("#search-performance");
+  if (!panel) {
+    return;
+  }
+  const trimmed = String(state.filters.search || "").trim().toLowerCase();
+  if (!trimmed) {
+    panel.hidden = true;
+    panel.innerHTML = "";
+    return;
+  }
+
+  const exact = state.companyIndex.find(
+    (company) => String(company.name || "").toLowerCase() === trimmed
+      || String(company.ticker || "").toLowerCase() === trimmed
+  );
+  const company = exact || null;
+
+  if (!company) {
+    panel.hidden = true;
+    panel.innerHTML = "";
+    return;
+  }
+
+  if (company.isPublic) {
+    const market = company.market || {};
+    const pct = Number.isFinite(market.changePercent) ? `${market.changePercent.toFixed(2)}%` : "N/A";
+    panel.innerHTML = `
+      <span class="sp-name">${company.name} <span class="sp-meta">${company.exchange}:${company.ticker}</span></span>
+      <div class="sp-row">
+        <span class="sp-price">${fmtDisplayPrice(market)}</span>
+        <span class="change ${formatChangeClass(market.changePercent)}">${pct}</span>
+      </div>
+      <span class="sp-meta">MCap ${fmtMarketCap(market.marketCap)} | P/E ${fmtNumber(market.peRatio)} | ${market.freshness || "Stale"}</span>
+    `;
+  } else {
+    const valuation = company.valuation || {};
+    panel.innerHTML = `
+      <span class="sp-name">${company.name} <span class="sp-meta">Private</span></span>
+      <div class="sp-row">
+        <span class="sp-price">${fmtCurrency((valuation.latestValuationUsdBn || 0) * 1_000_000_000, "USD")}</span>
+      </div>
+      <span class="sp-meta">As of ${valuation.valuationDate || "N/A"} | ${valuation.freshness || "Snapshot"}</span>
+    `;
+  }
+  panel.hidden = false;
+  panel.style.cursor = "pointer";
+  panel.title = "Click to view detailed stock performance";
+  panel.onclick = () => openDrawer(company, company.subsegmentName || "");
+};
+
 const renderMeta = (asOf) => {
   const meta = document.querySelector("#meta");
   meta.innerHTML = `
@@ -205,20 +415,20 @@ const renderLeaderboard = (payload) => {
     (a, b) => Number(b.valuationIndex.valuationChangePercent) - Number(a.valuationIndex.valuationChangePercent)
   );
 
-  const topGainer = sorted[0];
-  const topDecliner = sorted[sorted.length - 1];
+  const topGainers = sorted.slice(0, 5);
+  const topDecliners = sorted.slice(-5).reverse();
 
   const cards = [
-    {
-      title: "Top Gainer",
-      item: topGainer,
-      metric: `${topGainer.valuationIndex.valuationChangePercent.toFixed(2)}%`
-    },
-    {
-      title: "Top Decliner",
-      item: topDecliner,
-      metric: `${topDecliner.valuationIndex.valuationChangePercent.toFixed(2)}%`
-    }
+    ...topGainers.map((item, index) => ({
+      title: `Top Gainer #${index + 1}`,
+      item,
+      metric: `${item.valuationIndex.valuationChangePercent.toFixed(2)}%`
+    })),
+    ...topDecliners.map((item, index) => ({
+      title: `Top Decliner #${index + 1}`,
+      item,
+      metric: `${item.valuationIndex.valuationChangePercent.toFixed(2)}%`
+    }))
   ];
 
   leaderboard.innerHTML = cards
@@ -256,6 +466,165 @@ const renderValuationIndex = (valuationIndex) => {
   `;
 };
 
+const DRAWER_PERIODS = [
+  { value: "1d", label: "1D" },
+  { value: "1w", label: "1 Week" },
+  { value: "1m", label: "1 Month" },
+  { value: "3m", label: "3 Months" },
+  { value: "6m", label: "6 Months" },
+  { value: "1y", label: "1 Year" },
+  { value: "2y", label: "2 Years" },
+  { value: "3y", label: "3 Years" },
+  { value: "5y", label: "5 Years" }
+];
+
+const formatAxisDateLabel = (iso, period) => {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  if (period === "1d") {
+    return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  }
+  if (period === "1w" || period === "1m" || period === "3m" || period === "6m") {
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  return date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+};
+
+const buildAxisLabels = (history) => {
+  const points = Array.isArray(history?.points) ? history.points : [];
+  if (points.length === 0) {
+    return [];
+  }
+
+  const candidateIndexes = [
+    0,
+    Math.floor((points.length - 1) * (1 / 3)),
+    Math.floor((points.length - 1) * (2 / 3)),
+    points.length - 1
+  ];
+
+  const unique = [...new Set(candidateIndexes)]
+    .filter((idx) => idx >= 0 && idx < points.length)
+    .sort((a, b) => a - b);
+
+  return unique.map((idx) => formatAxisDateLabel(points[idx].time, history.period));
+};
+
+const buildChartPath = (points, width, height, padding) => {
+  if (!Array.isArray(points) || points.length < 2) {
+    return "";
+  }
+
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const span = Math.max(max - min, 1e-9);
+  const plotWidth = width - padding * 2;
+  const plotHeight = height - padding * 2;
+
+  return points
+    .map((value, index) => {
+      const x = padding + (index / (points.length - 1)) * plotWidth;
+      const y = padding + (1 - (value - min) / span) * plotHeight;
+      return `${index === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`;
+    })
+    .join(" ");
+};
+
+const renderPriceChart = (container, history) => {
+  if (!container) {
+    return;
+  }
+
+  const points = (history?.points || []).map((p) => Number(p.close)).filter(Number.isFinite);
+  if (points.length < 2) {
+    container.innerHTML = '<div class="drawer-chart-empty">No chart data for this period.</div>';
+    return;
+  }
+
+  const first = points[0];
+  const last = points[points.length - 1];
+  const delta = last - first;
+  const deltaPct = first > 0 ? (delta / first) * 100 : null;
+  const width = 420;
+  const height = 200;
+  const padding = 12;
+  const path = buildChartPath(points, width, height, padding);
+  const lineClass = formatChangeClass(deltaPct);
+  const axisLabels = buildAxisLabels(history);
+
+  container.innerHTML = `
+    <div class="drawer-chart-summary">
+      <span class="drawer-chart-price">${fmtCurrency(last, history.currency || "USD")}</span>
+      <span class="change ${lineClass}">${Number.isFinite(deltaPct) ? `${deltaPct.toFixed(2)}%` : "N/A"}</span>
+    </div>
+    <svg viewBox="0 0 ${width} ${height}" class="drawer-chart-svg" aria-label="Stock price history chart">
+      <path d="${path}" class="drawer-chart-line ${lineClass}"></path>
+    </svg>
+    <div class="drawer-chart-axis">
+      ${axisLabels.map((label) => `<span>${label}</span>`).join("")}
+    </div>
+  `;
+};
+
+const updateDrawerMetric = (id, value) => {
+  const el = document.querySelector(id);
+  if (el) {
+    el.textContent = value;
+  }
+};
+
+const loadPublicDrawerDetails = async (company, period, requestSeq) => {
+  const chartWrap = document.querySelector("#drawer-chart-wrap");
+  if (chartWrap) {
+    chartWrap.innerHTML = '<div class="drawer-chart-empty">Loading chart...</div>';
+  }
+
+  try {
+    const response = await fetch(`/api/stock-history?ticker=${encodeURIComponent(company.ticker)}&period=${encodeURIComponent(period)}`);
+    if (!response.ok) {
+      throw new Error("Unable to load price history");
+    }
+    const history = await response.json();
+    if (state.drawerRequestSeq !== requestSeq) {
+      return;
+    }
+
+    renderPriceChart(chartWrap, history);
+
+    const metrics = history.metrics || {};
+    const currency = history.currency || "USD";
+    const previousClose = Number.isFinite(metrics.previousClose) ? metrics.previousClose : metrics.chartPreviousClose;
+
+    updateDrawerMetric("#drawer-prev-close", fmtCurrency(previousClose, currency));
+    updateDrawerMetric("#drawer-open", fmtCurrency(metrics.regularMarketOpen, currency));
+    updateDrawerMetric(
+      "#drawer-day-range",
+      Number.isFinite(metrics.regularMarketDayLow) && Number.isFinite(metrics.regularMarketDayHigh)
+        ? `${fmtCurrency(metrics.regularMarketDayLow, currency)} - ${fmtCurrency(metrics.regularMarketDayHigh, currency)}`
+        : "N/A"
+    );
+    updateDrawerMetric(
+      "#drawer-52w-range",
+      Number.isFinite(metrics.fiftyTwoWeekLow) && Number.isFinite(metrics.fiftyTwoWeekHigh)
+        ? `${fmtCurrency(metrics.fiftyTwoWeekLow, currency)} - ${fmtCurrency(metrics.fiftyTwoWeekHigh, currency)}`
+        : "N/A"
+    );
+    updateDrawerMetric("#drawer-volume", fmtCompactNumber(metrics.regularMarketVolume));
+    updateDrawerMetric("#drawer-avg-volume", fmtCompactNumber(metrics.averageDailyVolume3Month));
+    updateDrawerMetric("#drawer-price-refresh", fmtDateTime(metrics.regularMarketTime));
+  } catch (error) {
+    if (state.drawerRequestSeq !== requestSeq) {
+      return;
+    }
+    if (chartWrap) {
+      chartWrap.innerHTML = `<div class="drawer-chart-empty">${error.message}</div>`;
+    }
+  }
+};
+
 const openDrawer = (company, subsegmentName) => {
   const drawer = document.querySelector("#company-drawer");
   const content = document.querySelector("#drawer-content");
@@ -268,6 +637,9 @@ const openDrawer = (company, subsegmentName) => {
       ? currentCap / (1 + pct / 100)
       : null;
 
+    const requestSeq = state.drawerRequestSeq + 1;
+    state.drawerRequestSeq = requestSeq;
+
     content.innerHTML = `
       <h2 class="drawer-title">${company.name}</h2>
       <p class="drawer-meta">${subsegmentName} | Public (${company.exchange}:${company.ticker})</p>
@@ -276,7 +648,23 @@ const openDrawer = (company, subsegmentName) => {
         <div class="drawer-kv"><span>1D Change</span><strong class="change ${formatChangeClass(market.changePercent)}">${Number.isFinite(market.changePercent) ? `${market.changePercent.toFixed(2)}%` : "N/A"}</strong></div>
         <div class="drawer-kv"><span>Market Cap</span><strong>${fmtMarketCap(market.marketCap)}</strong></div>
         <div class="drawer-kv"><span>P/E</span><strong>${fmtNumber(market.peRatio)}</strong></div>
-        <div class="drawer-kv"><span>Price Refresh</span><strong>${fmtDateTime(market.regularMarketTime)}</strong></div>
+        <div class="drawer-kv"><span>P/S</span><strong>${fmtNumber(market.psRatio)}</strong></div>
+        <div class="drawer-kv"><span>Prev Close</span><strong id="drawer-prev-close">N/A</strong></div>
+        <div class="drawer-kv"><span>Open</span><strong id="drawer-open">N/A</strong></div>
+        <div class="drawer-kv"><span>Day Range</span><strong id="drawer-day-range">N/A</strong></div>
+        <div class="drawer-kv"><span>52W Range</span><strong id="drawer-52w-range">N/A</strong></div>
+        <div class="drawer-kv"><span>Volume</span><strong id="drawer-volume">N/A</strong></div>
+        <div class="drawer-kv"><span>3M Avg Volume</span><strong id="drawer-avg-volume">N/A</strong></div>
+        <div class="drawer-kv"><span>Price Refresh</span><strong id="drawer-price-refresh">${fmtDateTime(market.regularMarketTime)}</strong></div>
+      </section>
+      <section class="drawer-section">
+        <div class="drawer-chart-head">
+          <strong>Price Movement</strong>
+          <select id="drawer-period-select" class="drawer-period-select">
+            ${DRAWER_PERIODS.map((item) => `<option value="${item.value}" ${item.value === "3m" ? "selected" : ""}>${item.label}</option>`).join("")}
+          </select>
+        </div>
+        <div id="drawer-chart-wrap" class="drawer-chart-wrap"></div>
       </section>
       <section class="drawer-section">
         <strong>Valuation History</strong>
@@ -287,6 +675,18 @@ const openDrawer = (company, subsegmentName) => {
         <p class="drawer-meta">${company.notes || ""}</p>
       </section>
     `;
+
+    const periodSelect = document.querySelector("#drawer-period-select");
+    if (periodSelect) {
+      periodSelect.addEventListener("change", () => {
+        const nextPeriod = String(periodSelect.value || "3m");
+        const nextSeq = state.drawerRequestSeq + 1;
+        state.drawerRequestSeq = nextSeq;
+        loadPublicDrawerDetails(company, nextPeriod, nextSeq);
+      });
+    }
+
+    loadPublicDrawerDetails(company, "3m", requestSeq);
   } else {
     const valuation = company.valuation || {};
     content.innerHTML = `
@@ -314,6 +714,7 @@ const openDrawer = (company, subsegmentName) => {
 
 const closeDrawer = () => {
   const drawer = document.querySelector("#company-drawer");
+  state.drawerRequestSeq += 1;
   drawer.classList.add("hidden");
   drawer.setAttribute("aria-hidden", "true");
 };
@@ -412,8 +813,17 @@ const renderFilters = (segments) => {
   searchInput.value = state.filters.search;
   searchInput.oninput = () => {
     state.filters.search = searchInput.value;
+    renderSearchDropdown();
+    renderSearchPerformance();
     render(state.latestPayload);
   };
+  searchInput.onkeydown = handleSearchKeydown;
+  searchInput.addEventListener("blur", () => {
+    const dropdown = document.querySelector("#search-dropdown");
+    setTimeout(() => {
+      dropdown.hidden = true;
+    }, 200);
+  });
 };
 
 const render = (payload) => {
@@ -421,6 +831,7 @@ const render = (payload) => {
   renderMeta(payload.asOf);
   renderLeaderboard(payload);
   renderFilters(payload.segments);
+  renderRefreshLog();
 
   const map = document.querySelector("#map");
   map.innerHTML = "";
@@ -469,6 +880,65 @@ const render = (payload) => {
   });
 };
 
+const renderRefreshLog = async () => {
+  const addedSection = document.querySelector("#refresh-log-added");
+  const removedSection = document.querySelector("#refresh-log-removed");
+  if (!addedSection || !removedSection) {
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/refresh-history");
+    if (!response.ok) {
+      addedSection.innerHTML = '<div class="refresh-log-empty">Unable to load history.</div>';
+      removedSection.innerHTML = '<div class="refresh-log-empty">Unable to load history.</div>';
+      return;
+    }
+
+    const body = await response.json();
+    const added = body.addedCompanies || [];
+    const removed = body.removedCompanies || [];
+
+    if (added.length === 0) {
+      addedSection.innerHTML = '<div class="refresh-log-empty">No companies added yet.</div>';
+    } else {
+      addedSection.innerHTML = added
+        .slice(0, 10)
+        .map(
+          (item) => `
+        <div class="refresh-log-item">
+          <div class="refresh-log-item-name">${item.name}</div>
+          <div class="refresh-log-item-subsegment">${item.subsegmentName || "N/A"}</div>
+          <div class="refresh-log-item-date">${fmtRemovalDate(item.addedDate || item.date)}</div>
+        </div>
+      `
+        )
+        .join("");
+    }
+
+    if (removed.length === 0) {
+      removedSection.innerHTML = '<div class="refresh-log-empty">No companies removed yet.</div>';
+    } else {
+      removedSection.innerHTML = removed
+        .slice(0, 10)
+        .map(
+          (item) => `
+        <div class="refresh-log-item">
+          <div class="refresh-log-item-name">${item.name}</div>
+          <div class="refresh-log-item-subsegment">${item.subsegmentName || "N/A"}</div>
+          <div class="refresh-log-item-date">${fmtRemovalDate(item.removedDate)}</div>
+        </div>
+      `
+        )
+        .join("");
+    }
+  } catch (error) {
+    console.error("Failed to render refresh log:", error);
+    addedSection.innerHTML = '<div class="refresh-log-empty">Error loading history.</div>';
+    removedSection.innerHTML = '<div class="refresh-log-empty">Error loading history.</div>';
+  }
+};
+
 const load = async () => {
   const response = await fetch("/api/value-chain");
   if (!response.ok) {
@@ -494,9 +964,15 @@ const boot = async () => {
     return;
   }
 
+  await loadCompanyIndex();
+
   setInterval(async () => {
     try {
       await load();
+      await loadCompanyIndex();
+      renderSearchDropdown();
+      renderSearchPerformance();
+      await renderRefreshLog();
     } catch {
       // Keep existing data visible when refresh fails.
     }
