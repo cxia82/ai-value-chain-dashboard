@@ -3,6 +3,7 @@
 Browser-compatible full-stack dashboard to map the AI value chain and monitor stock and valuation moves across upstream silicon, cloud platforms, foundation models, and downstream applications.
 
 ## Features
+- Dual dashboard versions: classic v1 and redesigned v2 (`/v2`).
 - Value-chain map with upstream to downstream segments.
 - Up to 20 companies per sub-segment, ranked by market cap descending.
 - Default view shows top 5 companies; expand to see remaining 15.
@@ -11,6 +12,7 @@ Browser-compatible full-stack dashboard to map the AI value chain and monitor st
 - Company search with autocomplete dropdown and live performance panel.
 - Detailed stock drawer with price chart, period selector, and extended metrics.
 - Leaderboard showing top 5 gainers and top 5 decliners across sub-segments.
+- v2 header toggles for theme (light/dark) and layout mode (`v2` / `v1` style).
 - Weekly automated company refresh: removes non-tradable companies, adds replacements.
 - Company Updates log showing last 10 added and last 10 removed companies with dates.
 
@@ -29,6 +31,14 @@ Browser-compatible full-stack dashboard to map the AI value chain and monitor st
    ```
 4. Open: http://localhost:3000
 
+## Dashboard Versions
+- v1 (classic): http://localhost:3000
+- v2 (redesign): http://localhost:3000/v2
+
+In v2, use the header controls to toggle:
+- Theme: light/dark
+- Layout: `v2` modern layout or `v1` classic-style layout
+
 ## Easy Cross-Computer Use (Windows + Mac)
 
 ### Option A: Run directly from this folder
@@ -43,6 +53,11 @@ What the launchers do automatically:
 - Install dependencies on first run
 - Create `.env` from `.env.example` if missing
 - Start the dashboard on `http://localhost:3000`
+
+Desktop shortcuts (Windows):
+- `AI Value Chain Dashboard.lnk` opens v1
+- `AI Value Chain Dashboard v2.lnk` opens v2
+- `Stop AI Dashboard.lnk` stops the local server
 
 ### Option B: Create a portable bundle for transfer
 1. Build bundle:

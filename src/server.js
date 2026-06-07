@@ -17,12 +17,18 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = Number(process.env.PORT || 3000);
 const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS || 12000);
+const VALUE_CHAIN_TIMEOUT_MS = Number(process.env.VALUE_CHAIN_TIMEOUT_MS || 25000);
+const VALUE_CHAIN_CACHE_TTL_MS = Number(process.env.VALUE_CHAIN_CACHE_TTL_MS || 30000);
 const TARGET_COMPANIES_PER_SUBSEGMENT = 20;
 const AUGMENTED_SEGMENT_IDS = new Set([
   "compute-infrastructure",
   "cloud-platforms",
   "foundation-models"
 ]);
+
+let valueChainCache = null;
+let valueChainCacheAtMs = 0;
+let valueChainInFlight = null;
 
 const unavailableMarket = (message = "Quote unavailable") => ({
   source: "unavailable",
@@ -111,6 +117,12 @@ const validatePublicListingShape = () => {
 };
 
 app.use(express.json());
+// v2 UI — served at /v2 (public-v2/ folder)
+app.use("/v2", express.static(path.join(__dirname, "..", "public-v2")));
+app.get("/v2", (_req, res) => {
+  res.sendFile(path.join(__dirname, "..", "public-v2", "index.html"));
+});
+// v1 UI (original)
 app.use(express.static(path.join(__dirname, "..", "public")));
 
 app.use((req, res, next) => {
@@ -123,18 +135,69 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
-  res.setTimeout(REQUEST_TIMEOUT_MS, () => {
+  const timeoutMs = req.path === "/api/value-chain" ? VALUE_CHAIN_TIMEOUT_MS : REQUEST_TIMEOUT_MS;
+  res.setTimeout(timeoutMs, () => {
     if (res.headersSent) {
       return;
     }
     res.status(504).json({
       message: "Request timed out",
-      timeoutMs: REQUEST_TIMEOUT_MS,
+      timeoutMs,
       path: req.originalUrl
     });
   });
   next();
 });
+
+const buildValueChainResponse = async () => {
+  const segments = getSegments();
+  const allSubsegments = getSubsegments();
+
+  const payload = await Promise.all(
+    segments.map(async (segment) => {
+      const segmentSubs = allSubsegments.filter((s) => s.segmentId === segment.id);
+      const rankedById = new Map(
+        await Promise.all(
+          segmentSubs.map(async (subsegment) => {
+            const enrichedCompanies = await enrichCompanies(subsegment.companies);
+            return [subsegment.id, rankCompaniesByMarketCap(enrichedCompanies)];
+          })
+        )
+      );
+
+      const augmentedById = buildAugmentedCompaniesBySubsegment(segment.id, segmentSubs, rankedById);
+
+      const subsegments = segmentSubs.map((subsegment) => {
+        const rankedCompanies = augmentedById.get(subsegment.id) || [];
+        const topFive = rankedCompanies.slice(0, 5);
+        const valuationIndex = computeSubsegmentValuationIndex(rankedCompanies);
+
+        return {
+          id: subsegment.id,
+          name: subsegment.name,
+          description: subsegment.description,
+          totalCompanies: rankedCompanies.length,
+          hiddenCompanies: Math.max(rankedCompanies.length - 5, 0),
+          topCompanies: topFive,
+          valuationIndex
+        };
+      });
+
+      return {
+        id: segment.id,
+        name: segment.name,
+        stage: segment.stage,
+        summary: segment.summary,
+        subsegments
+      };
+    })
+  );
+
+  return {
+    asOf: new Date().toISOString(),
+    segments: payload
+  };
+};
 
 const enrichCompanies = async (companies) => {
   const output = new Array(companies.length);
@@ -361,56 +424,40 @@ if (process.env.ENABLE_TEST_TIMEOUT_ROUTE === "true") {
 }
 
 app.get("/api/value-chain", async (_req, res) => {
-  const segments = getSegments();
-  const allSubsegments = getSubsegments();
+  try {
+    const nowMs = Date.now();
+    if (valueChainCache && nowMs - valueChainCacheAtMs < VALUE_CHAIN_CACHE_TTL_MS) {
+      if (!res.headersSent) {
+        res.json(valueChainCache);
+      }
+      return;
+    }
 
-  const payload = await Promise.all(
-    segments.map(async (segment) => {
-      const segmentSubs = allSubsegments.filter((s) => s.segmentId === segment.id);
-      const rankedById = new Map(
-        await Promise.all(
-          segmentSubs.map(async (subsegment) => {
-            const enrichedCompanies = await enrichCompanies(subsegment.companies);
-            return [subsegment.id, rankCompaniesByMarketCap(enrichedCompanies)];
-          })
-        )
-      );
+    if (!valueChainInFlight) {
+      valueChainInFlight = buildValueChainResponse()
+        .then((data) => {
+          valueChainCache = data;
+          valueChainCacheAtMs = Date.now();
+          return data;
+        })
+        .finally(() => {
+          valueChainInFlight = null;
+        });
+    }
 
-      const augmentedById = buildAugmentedCompaniesBySubsegment(segment.id, segmentSubs, rankedById);
-
-      const subsegments = segmentSubs.map((subsegment) => {
-        const rankedCompanies = augmentedById.get(subsegment.id) || [];
-        const topFive = rankedCompanies.slice(0, 5);
-        const valuationIndex = computeSubsegmentValuationIndex(rankedCompanies);
-
-        return {
-          id: subsegment.id,
-          name: subsegment.name,
-          description: subsegment.description,
-          totalCompanies: rankedCompanies.length,
-          hiddenCompanies: Math.max(rankedCompanies.length - 5, 0),
-          topCompanies: topFive,
-          valuationIndex
-        };
-      });
-
-      return {
-        id: segment.id,
-        name: segment.name,
-        stage: segment.stage,
-        summary: segment.summary,
-        subsegments
-      };
-    })
-  );
-
-  if (res.headersSent) {
-    return;
+    const data = await valueChainInFlight;
+    if (!res.headersSent) {
+      res.json(data);
+    }
+  } catch (error) {
+    if (res.headersSent) {
+      return;
+    }
+    res.status(502).json({
+      message: "Unable to build value chain response",
+      error: error?.message || "Unknown provider error"
+    });
   }
-  res.json({
-    asOf: new Date().toISOString(),
-    segments: payload
-  });
 });
 
 app.get("/api/subsegments/:id/companies", async (req, res) => {
@@ -594,8 +641,12 @@ app.get("/api/refresh-history", (_req, res) => {
   });
 });
 
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+app.get("*", (req, res) => {
+  if (req.path.startsWith("/v2")) {
+    res.sendFile(path.join(__dirname, "..", "public-v2", "index.html"));
+  } else {
+    res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+  }
 });
 
 validateCompanyUniqueness();

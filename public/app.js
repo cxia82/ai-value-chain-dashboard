@@ -9,7 +9,8 @@ const state = {
     listing: "all",
     region: "all",
     search: ""
-  }
+  },
+  refreshInFlight: false
 };
 
 const EXCHANGE_REGION = {
@@ -967,6 +968,10 @@ const boot = async () => {
   await loadCompanyIndex();
 
   setInterval(async () => {
+    if (state.refreshInFlight || document.hidden) {
+      return;
+    }
+    state.refreshInFlight = true;
     try {
       await load();
       await loadCompanyIndex();
@@ -975,6 +980,9 @@ const boot = async () => {
       await renderRefreshLog();
     } catch {
       // Keep existing data visible when refresh fails.
+    }
+    finally {
+      state.refreshInFlight = false;
     }
   }, 60_000);
 };

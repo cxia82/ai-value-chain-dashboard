@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Value Chain Dashboard v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/v2/styles.css" />
+</head>
+<body>
+
+  <!-- ═══ TOP HEADER ══════════════════════════════════════════════ -->
+  <header class="top-header">
+    <div class="header-logo">
+      <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Toggle sidebar">
+        <span class="hamburger-icon"></span>
+      </button>
+      <div class="logo-mark" aria-hidden="true">AI</div>
+      <span class="logo-text">Value Chain <span class="logo-sub">Dashboard</span></span>
+    </div>
+
+    <div class="header-search">
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <input id="filter-search" type="text" placeholder="Search company or ticker…" autocomplete="off" aria-label="Search companies" />
+      <div id="search-dropdown" class="search-dropdown" hidden></div>
+      <div id="search-performance" class="search-performance" hidden></div>
+    </div>
+
+    <div class="header-right">
+      <div id="header-badges" class="header-badges"></div>
+      <button id="layout-toggle" class="layout-toggle" type="button" title="Toggle layout" aria-label="Toggle layout">v2</button>
+      <button id="theme-toggle" class="theme-toggle" type="button" title="Toggle theme" aria-label="Toggle theme">☀</button>
+    </div>
+  </header>
+
+  <!-- ═══ SIDEBAR ════════════════════════════════════════════════ -->
+  <aside id="sidebar" class="sidebar" aria-label="Navigation and filters">
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label" aria-hidden="true">Value Chain</div>
+      <nav id="sidebar-stage-nav" class="sidebar-stage-nav" aria-label="Value chain stages"></nav>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label" aria-hidden="true">Filters</div>
+      <div class="sidebar-filters">
+        <div class="filter-group">
+          <label for="filter-listing">Company Type</label>
+          <select id="filter-listing" class="filter-select">
+            <option value="all">All Companies</option>
+            <option value="public">Public Only</option>
+            <option value="private">Private Only</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-region">Region</label>
+          <select id="filter-region" class="filter-select">
+            <option value="all">All Regions</option>
+            <option value="north-america">North America</option>
+            <option value="europe">Europe</option>
+            <option value="asia">Asia</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-mincap">Min Market Cap</label>
+          <select id="filter-mincap" class="filter-select">
+            <option value="0">No minimum</option>
+            <option value="1">$1B+</option>
+            <option value="10">$10B+</option>
+            <option value="100">$100B+</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label" aria-hidden="true">Watchlist ★</div>
+      <div id="sidebar-watchlist" class="sidebar-watchlist">
+        <div class="sidebar-empty">Pin companies using the ★ on any row.</div>
+      </div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label" aria-hidden="true">Portfolio</div>
+      <div id="sidebar-portfolio-summary" class="sidebar-portfolio-summary"></div>
+      <button id="portfolio-manage-btn" class="btn btn-ghost btn-sm" type="button">Manage holdings</button>
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="/" class="sidebar-v1-link">← Back to v1</a>
+    </div>
+
+  </aside>
+
+  <!-- ═══ STATS BAR ═══════════════════════════════════════════════ -->
+  <div id="stats-bar" class="stats-bar" aria-live="polite" aria-label="Market summary"></div>
+
+  <!-- ═══ MAIN CONTENT ════════════════════════════════════════════ -->
+  <main id="main" class="main">
+    <div class="content-area">
+
+      <div class="page-title-row">
+        <div>
+          <h1 class="page-title">AI Value Chain Dashboard</h1>
+          <p id="page-subtitle" class="page-subtitle">Loading…</p>
+        </div>
+        <div class="page-actions">
+          <button id="export-all-btn" class="btn btn-ghost" type="button">⬇ Export All CSV</button>
+        </div>
+      </div>
+
+      <section id="leaderboard" class="leaderboard-section" aria-label="Top movers"></section>
+
+      <div id="segment-tabs" class="segment-tabs" role="tablist" aria-label="Filter by stage"></div>
+
+      <section id="map" class="map" aria-label="Value chain segments"></section>
+
+      <section id="refresh-log" class="refresh-log" aria-label="Recent company updates"></section>
+
+    </div>
+  </main>
+
+  <!-- ═══ COMPANY DRAWER ══════════════════════════════════════════ -->
+  <aside id="company-drawer" class="company-drawer hidden" aria-hidden="true" aria-label="Company details">
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <div class="drawer-card">
+      <div class="drawer-top">
+        <div class="drawer-close-row">
+          <button id="drawer-watchlist-btn" class="watchlist-btn" type="button">★ Add to Watchlist</button>
+          <button id="drawer-close" class="drawer-close" type="button" aria-label="Close drawer">✕ Close</button>
+        </div>
+        <div id="drawer-header-content"></div>
+        <div class="drawer-tabs" id="drawer-tabs" role="tablist">
+          <button class="drawer-tab active" data-tab="overview" role="tab" aria-selected="true">Overview</button>
+          <button class="drawer-tab" data-tab="chart" role="tab" aria-selected="false">Chart</button>
+          <button class="drawer-tab" data-tab="fundamentals" role="tab" aria-selected="false">Fundamentals</button>
+        </div>
+      </div>
+      <div id="drawer-body" class="drawer-body"></div>
+    </div>
+  </aside>
+
+  <!-- ═══ COMPARISON PANEL ════════════════════════════════════════ -->
+  <div id="comparison-panel" class="comparison-panel hidden" aria-live="polite" aria-label="Company comparison"></div>
+
+  <!-- ═══ PORTFOLIO MODAL ═════════════════════════════════════════ -->
+  <div id="portfolio-modal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Portfolio holdings">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">Portfolio Holdings</h2>
+        <button id="portfolio-modal-close" class="drawer-close" type="button" aria-label="Close portfolio modal">✕ Close</button>
+      </div>
+      <div id="portfolio-modal-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ═══ HTML TEMPLATES ══════════════════════════════════════════ -->
+  <template id="segment-template">
+    <article class="segment-card">
+      <div class="segment-header">
+        <div class="segment-header-left">
+          <span class="stage-pill"></span>
+          <div>
+            <div class="segment-name"></div>
+            <div class="segment-summary"></div>
+          </div>
+        </div>
+        <div class="segment-index"></div>
+      </div>
+      <div class="subsegments-grid"></div>
+    </article>
+  </template>
+
+  <template id="subsegment-template">
+    <div class="subsegment-panel">
+      <div class="subsegment-head">
+        <div class="subsegment-name"></div>
+        <div class="subsegment-desc"></div>
+      </div>
+      <div class="subsegment-stats-row"></div>
+      <div class="companies"></div>
+      <button class="expand-btn" type="button"></button>
+      <div class="export-row">
+        <a class="export-btn export-json" href="#">⬇ JSON (top 5)</a>
+        <a class="export-btn export-csv" href="#">⬇ CSV (all)</a>
+      </div>
+    </div>
+  </template>
+
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+  <script type="module" src="/v2/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Value Chain Dashboard v2 - Light Theme Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --paper: #f8f6f0;
+      --paper-2: #f1ede2;
+      --ink: #152328;
+      --ink-soft: #485c63;
+      --line: #d7d0bf;
+      --line-strong: #c6bca8;
+      --card: #fffdf8;
+      --mint: #0f766e;
+      --mint-soft: #e5f4f0;
+      --amber: #a16207;
+      --amber-soft: #fbf0dc;
+      --rose: #b4233f;
+      --rose-soft: #fcecf0;
+      --sky: #1f6fa3;
+      --sky-soft: #eaf4fb;
+      --shadow: 0 8px 24px rgba(23, 36, 43, 0.08);
+      --sidebar-w: 250px;
+      --header-h: 64px;
+      --ticker-h: 44px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "IBM Plex Sans", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 0%, #f2f0e9 0%, transparent 35%),
+        radial-gradient(circle at 92% 100%, #efe8d8 0%, transparent 42%),
+        var(--paper);
+      min-height: 100vh;
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.08;
+      background-image: radial-gradient(#8b846f 0.45px, transparent 0.45px);
+      background-size: 3px 3px;
+      z-index: 0;
+    }
+
+    .top {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--header-h);
+      z-index: 30;
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      border-bottom: 1px solid var(--line);
+      background: rgba(248, 246, 240, 0.92);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0 1rem;
+      border-right: 1px solid var(--line);
+    }
+
+    .logo {
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      font: 700 0.76rem/1 "IBM Plex Mono", monospace;
+      color: #fff;
+      background: linear-gradient(145deg, #145a54 0%, #0f766e 100%);
+    }
+
+    .brand-text {
+      font-family: "Fraunces", serif;
+      font-size: 0.98rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .head-main {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0 1rem;
+    }
+
+    .search {
+      position: relative;
+      width: min(400px, 55vw);
+    }
+
+    .search input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 0.52rem 0.8rem 0.52rem 2rem;
+      font: 500 0.85rem/1 "IBM Plex Sans", sans-serif;
+      color: var(--ink);
+      outline: none;
+    }
+
+    .search input:focus { border-color: var(--mint); box-shadow: 0 0 0 2px rgba(15,118,110,0.14); }
+    .search .icon { position: absolute; left: 0.67rem; top: 50%; transform: translateY(-50%); color: #78919a; }
+
+    .head-status {
+      margin-left: auto;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .pill {
+      font: 600 0.72rem/1 "IBM Plex Mono", monospace;
+      border-radius: 999px;
+      padding: 0.24rem 0.58rem;
+      border: 1px solid;
+      display: inline-flex;
+      gap: 0.32rem;
+      align-items: center;
+    }
+
+    .pill.live { color: var(--mint); background: var(--mint-soft); border-color: #bddfd8; }
+    .pill.cached { color: var(--sky); background: var(--sky-soft); border-color: #cce2f2; }
+    .pill.stale { color: var(--rose); background: var(--rose-soft); border-color: #efcad4; }
+
+    .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+    .ticker {
+      position: fixed;
+      top: var(--header-h);
+      left: var(--sidebar-w);
+      right: 0;
+      height: var(--ticker-h);
+      z-index: 25;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(to right, #faf8f3, #f3efe5);
+      display: flex;
+      overflow: hidden;
+    }
+
+    .tick-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0 1rem;
+      border-right: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    .tick-label { font: 600 0.66rem/1 "IBM Plex Mono", monospace; color: #6f7f86; text-transform: uppercase; letter-spacing: 0.08em; }
+    .tick-value { font: 600 0.78rem/1 "IBM Plex Mono", monospace; }
+    .up { color: #0f8f57; }
+    .down { color: #bf2f4a; }
+
+    .side {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: var(--sidebar-w);
+      z-index: 20;
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, #f7f3ea 0%, #f3eee2 100%);
+      padding-top: var(--header-h);
+      overflow: auto;
+    }
+
+    .side-sec { padding: 0.9rem 0.75rem 0.2rem; }
+    .side-label {
+      font: 700 0.62rem/1 "IBM Plex Mono", monospace;
+      color: #6f7d7a;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
+      padding: 0 0.45rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.35rem;
+      padding: 0.5rem 0.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--ink-soft);
+      border: 1px solid transparent;
+      font-size: 0.82rem;
+    }
+
+    .nav-item:hover { background: #fff; border-color: var(--line); }
+    .nav-item.active { background: #fff; color: var(--mint); border-color: #b8d7d1; }
+
+    .count {
+      font: 600 0.65rem/1 "IBM Plex Mono", monospace;
+      color: #718388;
+      background: #eef2ef;
+      border-radius: 4px;
+      padding: 0.12rem 0.3rem;
+    }
+
+    .filters select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 0.42rem 0.52rem;
+      margin-bottom: 0.44rem;
+      color: var(--ink);
+      font-size: 0.8rem;
+    }
+
+    .watch-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.4rem;
+      padding: 0.38rem 0.42rem;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+
+    .watch-item:hover { background: #fff; }
+    .w-name { font-size: 0.79rem; font-weight: 600; }
+    .w-price { font: 600 0.72rem/1 "IBM Plex Mono", monospace; }
+
+    .main {
+      margin-left: var(--sidebar-w);
+      padding-top: calc(var(--header-h) + var(--ticker-h));
+      position: relative;
+      z-index: 1;
+    }
+
+    .inner {
+      max-width: 1320px;
+      padding: 1.2rem 1.45rem 2rem;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 1rem;
+      gap: 1rem;
+    }
+
+    h1 {
+      font-family: "Fraunces", serif;
+      font-size: clamp(1.35rem, 2.35vw, 2rem);
+      letter-spacing: 0.01em;
+    }
+
+    .sub { color: #66797f; font-size: 0.83rem; margin-top: 0.3rem; }
+
+    .actions { display: flex; gap: 0.5rem; }
+    .btn {
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      color: var(--ink-soft);
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.42rem 0.75rem;
+      cursor: pointer;
+    }
+
+    .btn.primary { background: var(--mint-soft); border-color: #b9d8d2; color: #0b5d57; }
+
+    .strip-title {
+      font: 700 0.65rem/1 "IBM Plex Mono", monospace;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: #6f7f86;
+      margin: 0.15rem 0 0.6rem;
+    }
+
+    .leaders {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.65rem;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: #c8bfa8;
+    }
+
+    .card.up::before { background: #4f9f74; }
+    .card.down::before { background: #c86177; }
+
+    .kicker { font: 600 0.6rem/1 "IBM Plex Mono", monospace; color: #7f8f93; text-transform: uppercase; letter-spacing: 0.07em; }
+    .name { margin: 0.22rem 0; font-weight: 600; font-size: 0.81rem; }
+    .metric { font: 700 0.95rem/1 "IBM Plex Mono", monospace; }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.36rem;
+      margin-bottom: 0.88rem;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0.3rem 0.72rem;
+      font-size: 0.77rem;
+      color: var(--ink-soft);
+      background: #fff;
+    }
+
+    .tab.active { color: #0d6660; border-color: #bbd8d3; background: var(--mint-soft); }
+
+    .segment {
+      background: #fffefb;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 0.8rem;
+      box-shadow: var(--shadow);
+    }
+
+    .seg-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #fffdf7 0%, #f8f3e8 100%);
+    }
+
+    .stage {
+      display: inline-block;
+      border-radius: 999px;
+      border: 1px solid #b7d7d1;
+      background: var(--mint-soft);
+      color: #0d655f;
+      font: 700 0.58rem/1 "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      padding: 0.18rem 0.52rem;
+      margin-right: 0.48rem;
+    }
+
+    .seg-title { font-family: "Fraunces", serif; font-size: 1rem; font-weight: 700; }
+    .seg-sub { font-size: 0.75rem; color: #6f8085; margin-top: 0.2rem; }
+
+    .seg-metrics { display: flex; gap: 0.92rem; }
+    .m-lbl { font: 700 0.58rem/1 "IBM Plex Mono", monospace; color: #7a8a8f; text-transform: uppercase; }
+    .m-val { font: 600 0.8rem/1.1 "IBM Plex Mono", monospace; margin-top: 0.1rem; }
+
+    .subgrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      background: var(--line);
+    }
+
+    .subpanel {
+      background: #fff;
+      padding: 0.75rem 0.8rem;
+    }
+
+    .subname { font-family: "Fraunces", serif; font-size: 0.86rem; font-weight: 700; }
+    .subdesc { font-size: 0.73rem; color: #6f8186; margin-top: 0.15rem; }
+
+    .stats {
+      display: flex;
+      gap: 0.6rem;
+      background: #f8f7f2;
+      border: 1px solid #ece7db;
+      border-radius: 7px;
+      padding: 0.32rem 0.4rem;
+      margin: 0.5rem 0;
+    }
+
+    .s-lbl { font: 700 0.52rem/1 "IBM Plex Mono", monospace; color: #819398; text-transform: uppercase; }
+    .s-val { font: 600 0.7rem/1 "IBM Plex Mono", monospace; margin-top: 0.1rem; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.12rem;
+      border-radius: 6px;
+    }
+
+    .row:hover { background: #f8f6f0; }
+    .rank { font: 600 0.64rem/1 "IBM Plex Mono", monospace; color: #7a8b90; text-align: center; }
+    .cname { font-size: 0.78rem; font-weight: 600; }
+    .cmeta { font: 500 0.62rem/1 "IBM Plex Mono", monospace; color: #7a8c90; }
+    .p { text-align: right; }
+    .price { font: 600 0.74rem/1 "IBM Plex Mono", monospace; }
+    .chg { font: 700 0.62rem/1 "IBM Plex Mono", monospace; margin-top: 0.15rem; }
+
+    .drawer {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 420px;
+      border-left: 1px solid var(--line);
+      background: #fffef9;
+      z-index: 35;
+      box-shadow: -12px 0 34px rgba(26, 36, 42, 0.16);
+      padding: 0.9rem;
+    }
+
+    .dr-head { display: flex; justify-content: space-between; align-items: center; }
+    .dr-btn { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 0.3rem 0.58rem; font-size: 0.72rem; }
+    .dr-name { font-family: "Fraunces", serif; font-size: 1.2rem; margin-top: 0.7rem; }
+    .dr-meta { color: #6e8085; font-size: 0.76rem; margin-top: 0.2rem; }
+
+    .dr-hero { display: flex; align-items: baseline; gap: 0.7rem; margin-top: 0.5rem; }
+    .dr-price { font: 700 1.55rem/1 "IBM Plex Mono", monospace; }
+    .dr-change { font: 700 0.9rem/1 "IBM Plex Mono", monospace; }
+
+    .dr-tabs { display: flex; gap: 0.35rem; margin: 0.65rem 0 0.75rem; }
+    .dr-tab { border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.6rem; font-size: 0.7rem; background: #fff; }
+    .dr-tab.active { border-color: #b8d7d1; background: var(--mint-soft); color: #0d655f; }
+
+    .chart {
+      height: 160px;
+      border: 1px solid #e7e0d3;
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(15,118,110,0.08) 0%, rgba(15,118,110,0.01) 100%),
+        #fff;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      margin-bottom: 0.7rem;
+      overflow: hidden;
+    }
+
+    .chart svg { width: 95%; height: 85%; }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid #e7e0d3;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .kv-item {
+      border-right: 1px solid #eee6d8;
+      border-bottom: 1px solid #eee6d8;
+      padding: 0.45rem 0.52rem;
+    }
+
+    .kv-item:nth-child(2n) { border-right: none; }
+    .kv-item:nth-last-child(-n + 2) { border-bottom: none; }
+
+    .k-l { font: 700 0.56rem/1 "IBM Plex Mono", monospace; color: #7e8f94; text-transform: uppercase; }
+    .k-v { font: 600 0.76rem/1 "IBM Plex Mono", monospace; margin-top: 0.15rem; }
+
+    .mockup-tag {
+      position: fixed;
+      left: 50%; bottom: 0.8rem;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      border: 1px solid #b9d8d2;
+      background: #eaf7f4;
+      color: #0b605b;
+      font: 700 0.7rem/1 "IBM Plex Mono", monospace;
+      letter-spacing: 0.06em;
+      padding: 0.38rem 0.85rem;
+      z-index: 40;
+    }
+
+    @media (max-width: 1180px) {
+      .leaders { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .drawer { width: 360px; }
+    }
+
+    @media (max-width: 920px) {
+      :root { --sidebar-w: 0px; }
+      .side { display: none; }
+      .top { grid-template-columns: 1fr; }
+      .ticker { left: 0; }
+      .main { margin-left: 0; }
+      .drawer { display: none; }
+      .subgrid { grid-template-columns: 1fr; }
+      .leaders { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain"></div>
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo">AI</div>
+      <div class="brand-text">Value Chain Dashboard</div>
+    </div>
+    <div class="head-main">
+      <div class="search">
+        <span class="icon">⌕</span>
+        <input type="text" placeholder="Search company or ticker" />
+      </div>
+      <div class="head-status">
+        <span class="pill live"><span class="dot"></span>Live</span>
+        <span class="pill cached"><span class="dot"></span>Cached</span>
+        <span class="pill stale"><span class="dot"></span>Stale</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="ticker">
+    <div class="tick-item"><span class="tick-label">Tracked Cap</span><span class="tick-value">$14.7T</span><span class="tick-value up">+1.4%</span></div>
+    <div class="tick-item"><span class="tick-label">Up</span><span class="tick-value up">218</span></div>
+    <div class="tick-item"><span class="tick-label">Down</span><span class="tick-value down">94</span></div>
+    <div class="tick-item"><span class="tick-label">Top Mover</span><span class="tick-value">NVDA</span><span class="tick-value up">+3.82%</span></div>
+  </div>
+
+  <aside class="side">
+    <div class="side-sec">
+      <div class="side-label">Value Chain</div>
+      <div class="nav-item active"><span>All Stages</span><span class="count">312</span></div>
+      <div class="nav-item"><span>Compute Infrastructure</span><span class="count">80</span></div>
+      <div class="nav-item"><span>Data & Cloud</span><span class="count">60</span></div>
+      <div class="nav-item"><span>Models & APIs</span><span class="count">40</span></div>
+      <div class="nav-item"><span>Apps</span><span class="count">72</span></div>
+      <div class="nav-item"><span>Verticals</span><span class="count">60</span></div>
+    </div>
+
+    <div class="side-sec filters">
+      <div class="side-label">Filters</div>
+      <select><option>All Companies</option></select>
+      <select><option>All Regions</option></select>
+      <select><option>No Min Market Cap</option></select>
+    </div>
+
+    <div class="side-sec">
+      <div class="side-label">Watchlist</div>
+      <div class="watch-item"><span class="w-name">NVIDIA</span><span class="w-price up">+3.82%</span></div>
+      <div class="watch-item"><span class="w-name">Microsoft</span><span class="w-price up">+0.91%</span></div>
+      <div class="watch-item"><span class="w-name">TSMC</span><span class="w-price down">-1.14%</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="inner">
+      <div class="hero">
+        <div>
+          <h1>AI Value Chain Dashboard</h1>
+          <div class="sub">Editorial Light Mockup - cleaner for daily executive scanning</div>
+        </div>
+        <div class="actions">
+          <button class="btn">Export</button>
+          <button class="btn primary">Refresh</button>
+        </div>
+      </div>
+
+      <div class="strip-title">Top Movers - Subsegment Index</div>
+      <section class="leaders">
+        <article class="card up"><div class="kicker">Gainer #1</div><div class="name">AI Accelerators & GPUs</div><div class="metric up">+3.82%</div></article>
+        <article class="card up"><div class="kicker">Gainer #2</div><div class="name">Foundation Models</div><div class="metric up">+2.61%</div></article>
+        <article class="card up"><div class="kicker">Gainer #3</div><div class="name">AI-Native Apps</div><div class="metric up">+1.97%</div></article>
+        <article class="card down"><div class="kicker">Decliner #1</div><div class="name">Semiconductor Equipment</div><div class="metric down">-1.44%</div></article>
+        <article class="card down"><div class="kicker">Decliner #2</div><div class="name">Cloud HPC & Storage</div><div class="metric down">-0.88%</div></article>
+      </section>
+
+      <div class="tabs">
+        <span class="tab active">All</span>
+        <span class="tab">Compute Infrastructure</span>
+        <span class="tab">Data & Cloud</span>
+        <span class="tab">Models & APIs</span>
+        <span class="tab">Apps</span>
+      </div>
+
+      <section class="segment">
+        <div class="seg-head">
+          <div>
+            <div><span class="stage">Upstream</span><span class="seg-title">Compute Infrastructure</span></div>
+            <div class="seg-sub">Chips, fabs, tools and networking core</div>
+          </div>
+          <div class="seg-metrics">
+            <div><div class="m-lbl">Index MCap</div><div class="m-val">$6.84T</div></div>
+            <div><div class="m-lbl">1D</div><div class="m-val up">+1.82%</div></div>
+            <div><div class="m-lbl">Tracked</div><div class="m-val">74/80</div></div>
+          </div>
+        </div>
+
+        <div class="subgrid">
+          <article class="subpanel">
+            <div class="subname">AI Accelerators & GPUs</div>
+            <div class="subdesc">Core compute chips enabling training and inference.</div>
+            <div class="stats">
+              <div><div class="s-lbl">MCap</div><div class="s-val">$3.12T</div></div>
+              <div><div class="s-lbl">Delta</div><div class="s-val up">+3.82%</div></div>
+              <div><div class="s-lbl">Public</div><div class="s-val">8</div></div>
+              <div><div class="s-lbl">Private</div><div class="s-val">12</div></div>
+            </div>
+
+            <div class="row"><div class="rank">1</div><div><div class="cname">NVIDIA</div><div class="cmeta">NASDAQ:NVDA</div></div><div class="p"><div class="price">$1,247.3</div><div class="chg up">+3.82%</div></div></div>
+            <div class="row"><div class="rank">2</div><div><div class="cname">AMD</div><div class="cmeta">NASDAQ:AMD</div></div><div class="p"><div class="price">$182.4</div><div class="chg up">+1.24%</div></div></div>
+            <div class="row"><div class="rank">3</div><div><div class="cname">Broadcom</div><div class="cmeta">NASDAQ:AVGO</div></div><div class="p"><div class="price">$1,834.2</div><div class="chg up">+0.93%</div></div></div>
+          </article>
+
+          <article class="subpanel">
+            <div class="subname">Semiconductor Equipment & EDA</div>
+            <div class="subdesc">Chip design software and fab equipment ecosystem.</div>
+            <div class="stats">
+              <div><div class="s-lbl">MCap</div><div class="s-val">$1.44T</div></div>
+              <div><div class="s-lbl">Delta</div><div class="s-val down">-1.44%</div></div>
+              <div><div class="s-lbl">Public</div><div class="s-val">20</div></div>
+              <div><div class="s-lbl">Private</div><div class="s-val">0</div></div>
+            </div>
+
+            <div class="row"><div class="rank">1</div><div><div class="cname">ASML</div><div class="cmeta">NASDAQ:ASML</div></div><div class="p"><div class="price">$824.6</div><div class="chg down">-2.14%</div></div></div>
+            <div class="row"><div class="rank">2</div><div><div class="cname">Applied Materials</div><div class="cmeta">NASDAQ:AMAT</div></div><div class="p"><div class="price">$196.4</div><div class="chg down">-1.22%</div></div></div>
+            <div class="row"><div class="rank">3</div><div><div class="cname">Lam Research</div><div class="cmeta">NASDAQ:LRCX</div></div><div class="p"><div class="price">$832.1</div><div class="chg down">-0.97%</div></div></div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <aside class="drawer">
+    <div class="dr-head">
+      <button class="dr-btn">★ Watchlist</button>
+      <button class="dr-btn">Close</button>
+    </div>
+    <div class="dr-name">NVIDIA</div>
+    <div class="dr-meta">Training Accelerators (Data Center) · NASDAQ:NVDA</div>
+    <div class="dr-hero">
+      <div class="dr-price">$1,247.30</div>
+      <div class="dr-change up">+3.82%</div>
+    </div>
+    <div class="dr-tabs">
+      <div class="dr-tab active">Overview</div>
+      <div class="dr-tab">Chart</div>
+      <div class="dr-tab">Fundamentals</div>
+    </div>
+    <div class="chart">
+      <svg viewBox="0 0 360 150" preserveAspectRatio="none" aria-label="price trend">
+        <path d="M0,122 C40,116 78,102 120,86 S199,52 242,41 S306,22 360,12" fill="none" stroke="#1c8f68" stroke-width="3"/>
+      </svg>
+    </div>
+    <div class="kv">
+      <div class="kv-item"><div class="k-l">Market Cap</div><div class="k-v">$3.08T</div></div>
+      <div class="kv-item"><div class="k-l">P/E</div><div class="k-v">47.2</div></div>
+      <div class="kv-item"><div class="k-l">Prev Close</div><div class="k-v">$1,201.10</div></div>
+      <div class="kv-item"><div class="k-l">Open</div><div class="k-v">$1,215.00</div></div>
+      <div class="kv-item"><div class="k-l">Day Range</div><div class="k-v">$1,209–$1,252</div></div>
+      <div class="kv-item"><div class="k-l">52W Range</div><div class="k-v">$820–$1,310</div></div>
+    </div>
+  </aside>
+
+  <div class="mockup-tag">LIGHT THEME MOCKUP - V2</div>
+</body>
+</html>

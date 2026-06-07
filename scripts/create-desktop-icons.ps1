@@ -7,6 +7,7 @@ New-Item -ItemType Directory -Force -Path $iconDir | Out-Null
 $startIco = Join-Path $iconDir 'dashboard-start.ico'
 $stopIco  = Join-Path $iconDir 'dashboard-stop.ico'
 $startLnk = Join-Path $desktop 'AI Value Chain Dashboard.lnk'
+$startV2Lnk = Join-Path $desktop 'AI Value Chain Dashboard v2.lnk'
 $stopLnk  = Join-Path $desktop 'Stop AI Dashboard.lnk'
 
 # ── Helper: save Bitmap as an ICO file ──────────────────────────────────────
@@ -35,16 +36,6 @@ function Add-RoundRect($g, $brush, $x, $y, $w, $h, $r) {
     $p.AddArc($x+$w-$r*2,  $y+$h-$r*2, $r*2, $r*2,   0, 90)
     $p.AddArc($x,          $y+$h-$r*2, $r*2, $r*2,  90, 90)
     $p.CloseFigure(); $g.FillPath($brush, $p); $p.Dispose()
-}
-
-# ── Helper: centred string ───────────────────────────────────────────────────
-function Draw-Centered($g, $text, $font, $brush, $cx, $cy) {
-    $sf = New-Object Drawing.StringFormat
-    $sf.Alignment     = [Drawing.StringAlignment]::Center
-    $sf.LineAlignment = [Drawing.StringAlignment]::Center
-    $rect = New-Object Drawing.RectangleF(0, 0, 256, $cy * 2)
-    $g.DrawString($text, $font, $brush, $rect, $sf)
-    $sf.Dispose()
 }
 
 $sz = 256
@@ -146,6 +137,14 @@ $s.IconLocation     = $startIco + ',0'
 $s.Description      = 'Start AI Value Chain Dashboard'
 $s.Save()
 Write-Host "  Updated: $startLnk"
+
+$s = $wsh.CreateShortcut($startV2Lnk)
+$s.TargetPath       = 'wscript.exe'
+$s.Arguments        = '"' + (Join-Path $projScripts 'AI-Value-Chain-Dashboard-v2.vbs') + '"'
+$s.IconLocation     = $startIco + ',0'
+$s.Description      = 'Start AI Value Chain Dashboard v2'
+$s.Save()
+Write-Host "  Updated: $startV2Lnk"
 
 $s = $wsh.CreateShortcut($stopLnk)
 $s.TargetPath       = 'wscript.exe'
